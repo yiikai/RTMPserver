@@ -1,6 +1,6 @@
 #include "connection.h"
 
-connection::connection()
+connection::connection():m_sockfd(-1)
 {
 
 }

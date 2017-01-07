@@ -2,8 +2,7 @@
 
 int main()
 {
-	rtmpserver rs;
-	rs.init();
-	rs.rtmp_listen();
+    rtmpserver* server = rtmpserver::getInstance();
+	server->rtmp_listen();
 	return 0;
 }

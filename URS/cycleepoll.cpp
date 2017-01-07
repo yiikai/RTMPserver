@@ -11,11 +11,32 @@ cycleepoll::cycleepoll():m_stop(false)
 
 cycleepoll::~cycleepoll()
 {
+    if(!m_fdmap.empty())
+    {
+        map<int,connection*>::iterator itr = m_fdmap.begin();
+        for(;itr != m_fdmap.end(); itr++)
+        {
+            delete (*itr).second;
+        }
+        m_fdmap.clear();
+    }
 
+    if(!m_fdclimap.empty())
+    {
+        map<int,connection*>::iterator itr = m_fdclimap.begin();
+        for(;itr != m_fdclimap.end(); itr++)
+        {
+            delete (*itr).second;
+        }
+        m_fdclimap.clear();
+    }
+
+    close(m_epollfd);
+   
 }
 
 void cycleepoll::modifyconnectionsocketfd(fdtype type,int fd)
-{
+{
 	struct epoll_event ep_event;
 	if(type == readfd)
 	{
@@ -29,8 +50,7 @@ void cycleepoll::modifyconnectionsocketfd(fdtype type,int fd)
 	if(ret == -1)
 	{
 		printf("epool mod fd error, %s\n",strerror(errno));
-	}
-		
+	}		
 }
 
 
@@ -45,7 +65,11 @@ void cycleepoll::addlistenconnection(connection* conn)
 	
 void cycleepoll::dellistenconnection(connection* conn)
 {
-
+    if(m_fdmap.find(conn->getfd())->second)
+    {
+        m_fdmap.erase(conn->getfd());
+        epoll_ctl(m_epollfd,EPOLL_CTL_DEL,conn->getfd(),NULL);
+    }
 }
 	
 void cycleepoll::addclientconnection(connection* conn)
@@ -59,7 +83,11 @@ void cycleepoll::addclientconnection(connection* conn)
 
 void cycleepoll::delclientconnection(connection* conn)
 {
-
+    if(m_fdclimap.find(conn->getfd())->second)
+    {
+        m_fdclimap.erase(conn->getfd());
+        epoll_ctl(m_epollfd,EPOLL_CTL_DEL,conn->getfd(),NULL);
+    }
 }
 
 bool cycleepoll::init()
@@ -96,7 +124,7 @@ void cycleepoll::startcycle()
 			printf("number %d\n",i);
 			map<int,connection*>::iterator itr;
 			itr = m_fdmap.find(events[i].data.fd);
-			if(itr != m_fdmap.end())
+			if(itr != m_fdmap.end())  //check if current active fd is Server listen fd
 			{
 				printf("active client fd is %d\n",events[i].data.fd);
 				connection* cli = ((tcplistener*)(itr->second))->acceptclient();
@@ -111,7 +139,7 @@ void cycleepoll::startcycle()
 			}
 			if(events[i].events == EPOLLOUT)
 			{
-				//可写的socket一定是客户端进行播放的socket，需要拉去AV数据
+				//If events can write it must be a client connect to server , so need pull AV stream 
 				printf("client %d want pull stream and need send AV stream\n",events[i].data.fd);
 				itr->second->pullandsendstream();
 				continue;

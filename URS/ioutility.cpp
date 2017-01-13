@@ -17,11 +17,7 @@ ioutility::~ioutility()
 int ioutility::ioread(int fd, char* buf, int size)
 {
 	int allnum = size;
-	//do
-	//{
-		int ret = read(fd,buf,size);
-		//allnum -= ret;
-	//}while(allnum);
+	int ret = read(fd,buf,size);
 	return ret;
 }
 

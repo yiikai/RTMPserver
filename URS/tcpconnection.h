@@ -3,14 +3,8 @@
 
 #include "connection.h"
 #include "rtmpprotocol.h"
-typedef enum RTMPSTATUS
-{
-	noconnect = -1,
-	handshakeC0C1 = 0,
-	handshakeC2,
-	rtmpconnect,
-	streamservice,
-};
+
+
 
 class tcpconnection : public connection{
 

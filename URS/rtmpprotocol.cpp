@@ -790,6 +790,50 @@ int rtmpprotocol::readC0C1()
 	return 0;
 }
 
+int rtmpprotocol::handle_handshakeC2()
+{
+	int ret;
+	readC2();
+	c2s2 c2;
+	c2.parse(getC2(), 1536);
+
+	printf("complex handshake read c2 success.\n");
+
+	// verify c2
+	// never verify c2, for ffmpeg will failed.
+	// it's ok for flash.
+	printf("complex handshake success\n");
+}
+
+int rtmpprotocol::handle_handshakeC0C1()
+{
+	readC0C1();
+	c1s1 c1;
+	Hschem sch = HAND_SHAKE_SCHEMA0;
+	c1.parse(getC0C1() + 1, 1536, sch);
+	bool is_valid = false;
+	int ret;
+	HandType type = complex;
+	setHandShakeMethod(type);
+	if ((ret = c1.c1_validate_digest(is_valid)) != 0 || !is_valid)
+	{
+		printf("schema0 failed, try schema1.\n");
+		sch = HAND_SHAKE_SCHEMA1;
+		c1.parse(getC0C1() + 1, 1536, sch);
+		if ((ret = c1.c1_validate_digest(is_valid)) != 0 || !is_valid) {
+			//ret = ERROR_RTMP_TRY_SIMPLE_HS;
+			HandType type = simple;
+			setHandShakeMethod(type);
+			printf("all schema valid failed, try simple handshake. ret=%d", ret);
+		}
+		HandType type = complex;
+		setHandShakeMethod(type);
+	}
+
+	//after read c0c1 need create s0s1s2 send to client
+	createS0S1S2(c1);
+}
+
 int rtmpprotocol::createS0S1S2(c1s1& _c1s1)
 {
     if(m_handtype == simple)
@@ -1835,7 +1879,31 @@ int rtmpprotocol::readmessagepayload(chunkstream* chunk,char fmt)
 	return 0;
 }
 
+/*
+0 1 2 3 4 5 6 7                             
++-+-+-+-+-+-+-+-+                             
+|fmt|   cs id   |                             
++-+-+-+-+-+-+-+-+
+Chunk basic header 1
+Chunk stream IDs 2-63 can be encoded in the 1-byte version of this  field
 
+0                   1                      
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5                     
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                     
+|fmt|     0     |   cs id - 64  |                     
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+Chunk basic header 2
+Chunk stream IDs 64-65599 can be encoded in the 3-byte version of   
+this field.  ID is computed as ((the third byte)*256 + (the second   byte) + 64).
+
+0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3             
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+             
+|fmt|     1     |        cs id - 64             |             
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+Chunk basic header 3
+Chunk stream IDs 64-65599 can be encoded in the 3-byte version of   
+this field.  ID is computed as ((the third byte)*256 + (the second   byte) + 64)
+*/
 int rtmpprotocol::readbasicheader(char& fmt, int& cid)
 {
 	int ret = ioutility::ioread(m_fd,(char*)&fmt,1);

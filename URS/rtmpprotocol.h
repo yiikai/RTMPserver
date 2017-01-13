@@ -227,7 +227,14 @@ enum SrcPCUCEventType
     SrsPCUCFmsEvent0                = 0x1a,
 };
 
-
+typedef enum RTMPSTATUS
+{
+	RTMPSTATUS_NOCONNECT = -1,
+	RTMPSTATUS_HANDSHAKEC0C1 = 0,
+	RTMPSTATUS_HANDSHAKEC2,
+	RTMPSTATUS_RTMPCONNECT,
+	RTMPSTATUS_STREAMSERVICE,
+};
 
 class rtmpcommonmessage;
 class rtmpcommonmessageheader;
@@ -1100,29 +1107,8 @@ public:
 	rtmpprotocol(int fd);
 	~rtmpprotocol();
 
-   
-	int readC0C1();
-    char* getC0C1(){
-        if(m_c0c1)
-            return m_c0c1;
-        else
-            return NULL;
-    }
-	int createS0S1S2(c1s1& _c1s1);
-    void setHandShakeMethod(HandType type)
-    {
-        m_handtype = type;
-    }
-	int readC2();
-    char* getC2()
-    {
-        if(m_c2)
-        {
-            return m_c2;
-        }
-        else
-            return NULL;
-    }
+	int handle_handshakeC0C1();
+	int handle_handshakeC2();
 	int connectapp();
 	int set_window_ack_size(int ack_size);
 	int set_peer_bandwidth_size(int bandwidth, char type);
@@ -1132,6 +1118,28 @@ public:
 	int stream_service_cycle();
 	int pull_and_send_stream();
 private:
+	int readC0C1();
+	char* getC0C1(){
+		if (m_c0c1)
+			return m_c0c1;
+		else
+			return NULL;
+	}
+	int createS0S1S2(c1s1& _c1s1);
+	void setHandShakeMethod(HandType type)
+	{
+		m_handtype = type;
+	}
+	int readC2();
+	char* getC2()
+	{
+		if (m_c2)
+		{
+			return m_c2;
+		}
+		else
+			return NULL;
+	}
 	int recv_message(rtmpcommonmessage** msg);
 	int recv_interlaced_message(rtmpcommonmessage** msg, rtmpcommonmessageheader& header,int& chunkfmt);
 	int readbasicheader(char& fmt, int& cid);

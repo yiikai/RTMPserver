@@ -89,6 +89,7 @@ using namespace std;
 #define RTMP_AMF0_COMMAND_FC_PUBLISH            "FCPublish"
 #define RTMP_AMF0_COMMAND_UNPUBLISH             "FCUnpublish"
 #define RTMP_AMF0_COMMAND_PUBLISH               "publish"
+#define RTMP_AMF0_COMMAND_DELETE_STREAM         "deleteStream"
 #define RTMP_AMF0_DATA_SAMPLE_ACCESS            "|RtmpSampleAccess"
 
 /**
@@ -887,6 +888,33 @@ public:
 	amf0object *m_prop;
 	amf0object *m_info;
 	
+};
+
+class rtmpUnPublishPacket : public rtmpcommonpacket
+{
+public:
+	rtmpUnPublishPacket() :command_name("FCUnpublish"), transaction_id(0)
+	{
+	}
+	~rtmpUnPublishPacket(){};
+
+	int decodepayload(rtmpcommonmessage* msg);
+	int encode_packet(streamworker* stream){};
+	int get_message_type(){
+		return RTMP_MSG_AMF0CommandMessage;
+	}
+	int get_prefer_chunkid(){
+		return RTMP_CID_ONSTATUS;
+	}
+private:
+	int get_size(){
+		return Amf0Size::str(RTMP_AMF0_COMMAND_UNPUBLISH) + Amf0Size::number()
+			+ Amf0Size::null() + Amf0Size::str(stream_name);
+	}
+public:
+	string command_name;
+	string stream_name;
+	double transaction_id;
 };
 
 class rtmpOnStatusCallPacket : public rtmpcommonpacket

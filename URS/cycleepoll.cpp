@@ -3,6 +3,8 @@
 #include <errno.h>
 
 int cycleepoll::m_epollfd = -1;
+map<int, connection*> cycleepoll::m_fdmap;
+map<int, connection*> cycleepoll::m_fdclimap;
 
 cycleepoll::cycleepoll():m_stop(false)
 {
@@ -88,6 +90,16 @@ void cycleepoll::delclientconnection(connection* conn)
         m_fdclimap.erase(conn->getfd());
         epoll_ctl(m_epollfd,EPOLL_CTL_DEL,conn->getfd(),NULL);
     }
+}
+
+void cycleepoll::delclientconnection(int fd)
+{
+	if (m_fdclimap.find(fd)->second)
+	{
+		m_fdclimap.erase(fd);
+		epoll_ctl(m_epollfd, EPOLL_CTL_DEL, fd, NULL);
+		close(fd);
+	}
 }
 
 bool cycleepoll::init()

@@ -26,6 +26,7 @@ public:
 
 	void addclientconnection(connection* conn);
 	void delclientconnection(connection* conn);
+	static void delclientconnection(int fd);
 
 	bool init();
 	void startcycle();
@@ -35,8 +36,8 @@ public:
 private:
 	static int m_epollfd;
 	int m_stop;
-	map<int,connection*> m_fdmap;  //epoll 监听的LISTEN描述符
-	map<int,connection*> m_fdclimap;
+	static map<int,connection*> m_fdmap;  //epoll 监听的LISTEN描述符
+	static map<int,connection*> m_fdclimap;
 };
 
 #endif

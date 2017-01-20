@@ -49,20 +49,20 @@ void srs_discovery_tc_url(
     if ((pos = url.find("://")) != std::string::npos) {
         schema = url.substr(0, pos);
         url = url.substr(schema.length() + 3);
-        printf("discovery schema=%s\n", schema.c_str());
+        //printf("discovery schema=%s\n", schema.c_str());
     }
     
     if ((pos = url.find("/")) != std::string::npos) {
         host = url.substr(0, pos);
         url = url.substr(host.length() + 1);
-        printf("discovery host=%s\n", host.c_str());
+        //printf("discovery host=%s\n", host.c_str());
     }
 
     port = 1935;
     if ((pos = host.find(":")) != std::string::npos) {
         port = host.substr(pos + 1);
         host = host.substr(0, pos);
-        printf("discovery host=%s, port=%s\n", host.c_str(), port.c_str());
+        //printf("discovery host=%s, port=%s\n", host.c_str(), port.c_str());
     }
     
     app = url;

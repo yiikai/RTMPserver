@@ -9,7 +9,7 @@ public:
 	virtual ~listener();
 	bool createconnection(char* ip, int port);
 	void dostreamingservice(){}
-	void pullandsendstream(){}
+	int pullandsendstream(){}
 protected:
 	virtual bool createlistener(char* ip, int port) = 0;
 };

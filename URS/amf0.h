@@ -1,3 +1,11 @@
+/******************************************************
+# Author       : Yii-Kai Mao
+# Last modified: 2017-01-20 11:27
+# Email        : yiikai1987910@gmail.com
+# Filename     : amf0.h
+# Description  : 
+******************************************************/
+
 #ifndef AMF_0_H
 #define AMF_0_H
 

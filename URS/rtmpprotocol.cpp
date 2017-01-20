@@ -4,6 +4,7 @@
 #include "amf0.h"
 #include "cycleepoll.h"
 #include "rtmpcomplexhandshake.h"
+#include "flvcodec.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -21,7 +22,7 @@ int rtmpcreatestreampacket::decodepayload(rtmpcommonmessage* msg)
 	if (command_name.empty() || command_name != RTMP_AMF0_COMMAND_CREATE_STREAM) {
 		ret = -1;
 		printf("amf0 decode create stream packet command_name failed. "
-			"command_name=%s, ret=%d\n", command_name.c_str(), ret);
+				"command_name=%s, ret=%d\n", command_name.c_str(), ret);
 		return ret;
 	}
 	if ((ret = srs_amf0_read_number(&stream, transaction_id)) != 0) {
@@ -82,7 +83,7 @@ int rtmpfcpublishpacket::decodepayload(rtmpcommonmessage* msg)
 	if (command_name.empty() || command_name != RTMP_AMF0_COMMAND_FC_PUBLISH) {
 		ret = -1;
 		printf("amf0 decode FCPublish packet command_name failed. "
-			"command_name=%s, ret=%d\n", command_name.c_str(), ret);
+				"command_name=%s, ret=%d\n", command_name.c_str(), ret);
 		return ret;
 	}
 	if ((ret = srs_amf0_read_number(&stream, transaction_id)) != 0) {
@@ -159,7 +160,7 @@ int rtmpreleasestreampacket::decodepayload(rtmpcommonmessage* msg)
 	if (command_name.empty() || command_name != RTMP_AMF0_COMMAND_RELEASE_STREAM) {
 		ret = -1;
 		printf("amf0 decode FMLE start response command_name failed. "
-			"command_name=%s, ret=%d\n", command_name.c_str(), ret);
+				"command_name=%s, ret=%d\n", command_name.c_str(), ret);
 		return ret;
 	}
 
@@ -186,7 +187,7 @@ int rtmppublishpacket::decodepayload(rtmpcommonmessage* msg)
 	if (command_name.empty() || command_name != RTMP_AMF0_COMMAND_PUBLISH) {
 		ret = -1;
 		printf("amf0 decode publish packet command_name failed. "
-			"command_name=%s, ret=%d\n", command_name.c_str(), ret);
+				"command_name=%s, ret=%d\n", command_name.c_str(), ret);
 		return ret;
 	}
 
@@ -320,7 +321,7 @@ int rtmpcommonpacket::encode(int& size, char** ppayload)
 
 
 setwindowacksizepacket::setwindowacksizepacket() :rtmpcommonpacket(),
-ackowledgement_window_size(0)
+	ackowledgement_window_size(0)
 {
 
 }
@@ -353,7 +354,7 @@ int setwindowacksizepacket::encode_packet(streamworker* stream)
 	stream->write4bytes(ackowledgement_window_size);
 
 	printf("encode ack size packet "
-		"success. ack_size=%d\n", ackowledgement_window_size);
+			"success. ack_size=%d\n", ackowledgement_window_size);
 
 	return ret;
 }
@@ -385,7 +386,7 @@ int setpeerbandwidthpacket::encode_packet(streamworker* stream)
 	}
 	stream->write1bytes(type);
 	printf("encode peer bandwidth packet "
-		"success. bandwidth=%d, type=%d\n", bandwidth, type);
+			"success. bandwidth=%d, type=%d\n", bandwidth, type);
 	return ret;
 }
 
@@ -400,7 +401,7 @@ int setchunksizepacket::encode_packet(streamworker* stream)
 	}
 	stream->write4bytes(size);
 	printf("encode set chunk size packet "
-		"success. size=%d\n", size);
+			"success. size=%d\n", size);
 	return ret;
 }
 
@@ -418,7 +419,7 @@ int rtmpplaypacket::decodepayload(rtmpcommonmessage* msg)
 	if (command_name.empty() || command_name != RTMP_AMF0_COMMAND_PLAY) {
 		ret = -1;
 		printf("amf0 decode play command_name failed. "
-			"command_name=%s, ret=%d\n", command_name.c_str(), ret);
+				"command_name=%s, ret=%d\n", command_name.c_str(), ret);
 		return ret;
 	}
 
@@ -528,7 +529,7 @@ int rtmpUnPublishPacket::decodepayload(rtmpcommonmessage* msg)
 	{
 		ret = -1;
 		printf("amf0 decode unpublish command_name failed.\n "
-			"command_name=%s, ret=%d", command_name.c_str(), ret);
+				"command_name=%s, ret=%d", command_name.c_str(), ret);
 		return ret;
 	}
 
@@ -563,7 +564,7 @@ int rtmpconnectpacket::decodepayload(rtmpcommonmessage* msg)
 	if (command_name.empty() || command_name != RTMP_AMF0_COMMAND_CONNECT) {
 		ret = -1;
 		printf("amf0 decode connect command_name failed. "
-			"command_name=%s, ret=%d\n", command_name.c_str(), ret);
+				"command_name=%s, ret=%d\n", command_name.c_str(), ret);
 		return ret;
 	}
 	if ((ret = srs_amf0_read_number(&stream, transaction_id)) != 0) {
@@ -663,8 +664,8 @@ int rtmpusercontrolmessage::decodepayload(rtmpcommonmessage* msg)
 	}
 
 	printf("decode user control success. "
-		"event_type=%d, event_data=%d, extra_data=%d\n",
-		event_type, event_data, extra_data);
+			"event_type=%d, event_data=%d, extra_data=%d\n",
+			event_type, event_data, extra_data);
 
 	return ret;
 }
@@ -792,23 +793,30 @@ int usercontrolpacket::encode_packet(streamworker* stream)
 	}
 
 	printf("encode user control packet success. "
-		"event_type=%d, event_data=%d\n", event_type, event_data);
+			"event_type=%d, event_data=%d\n", event_type, event_data);
 
 	return ret;
 }
 
 
+char* m_c0c1;
+	char* m_s0s1s2;
+	char* m_c2;
 
-rtmpprotocol::rtmpprotocol(int fd) :m_source(NULL), default_chunksize(128)
+rtmpprotocol::rtmpprotocol(int fd) :m_source(NULL), 
+									default_chunksize(128),
+									m_c0c1(NULL),
+									m_s0s1s2(NULL),
+									m_c2(NULL)
 {
 	m_fd = fd;
+	m_clientVec.reserve(10);
 }
 
 rtmpprotocol::~rtmpprotocol()
 {
 
 }
-
 
 
 int rtmpprotocol::readC0C1()
@@ -1145,9 +1153,9 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 		req.objectEncoding = ((Amf0Number*)any)->value;
 
 		srs_discovery_tc_url(req.tcUrl, req.schema, req.host, req.app, req.port,
-			req.param);
+				req.param);
 		printf("discovery app success. tcUrl=%s, schema=%s, port=%s, app=%s\n",
-			req.tcUrl.c_str(), req.schema.c_str(), req.port.c_str(), req.app.c_str());
+				req.tcUrl.c_str(), req.schema.c_str(), req.port.c_str(), req.app.c_str());
 		delete packet;
 		return ret;
 	}
@@ -1225,7 +1233,7 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 		m_source = ss->findsource(&req);
 		if (!m_source)
 		{
-			m_source = ss->createsource(&req);
+			m_source = ss->createsource(&req,this);
 		}
 
 		delete packet;
@@ -1287,9 +1295,15 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 			return -1;
 		}
 		//ÔÚ½øĞĞplayÖ®Ç°£¬ĞèÒªĞŞ¸ÄsocketµÄ¼àÌıÊÂ¼şÎª¿ÉĞ´,ÕâÑùÃ¿´Î¶¼¿ÉÒÔÔÚepollµÄÊ±ºò¶ÔÕâ¸ösocket½øĞĞAVÊı¾İµÄwrite¶¯×÷
-
-		fdtype type = writefd;
-		cycleepoll::modifyconnectionsocketfd(type, m_fd);
+		if(m_source->get_rtmpprotocol())
+		{
+			m_source->get_rtmpprotocol()->add_play_client(m_fd);
+			send_and_free_message_to_client(&(m_source->get_MessageData()),m_fd);
+			send_and_free_message_to_client(&(m_source->get_Video_Sequence_Head()),m_fd);
+			send_gop_cache(m_source->get_rtmpprotocol()->m_cache);
+		}
+		//	fdtype type = writefd;
+		//	cycleepoll::modifyconnectionsocketfd(type, m_fd);
 		delete packet;
 		delete pkt;
 	}
@@ -1299,6 +1313,21 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 		return -1;
 	}
 	return ret;
+}
+
+
+void rtmpprotocol::send_gop_cache(gopcache& cache)
+{
+	vector<sharedMessage>::iterator itr = (cache.getCache()).begin();
+	for(; itr != (cache.getCache()).end() ; itr++)
+	{
+		send_and_free_message_to_client(&(*itr),m_fd);
+	}
+}
+
+void rtmpprotocol::add_play_client(int clientfd)
+{
+	m_clientVec.push_back(clientfd);
 }
 
 int rtmpprotocol::create_c1_chunk(char* chunk, rtmpcommonmessageheader* mh)
@@ -1431,7 +1460,7 @@ int rtmpprotocol::on_amfmessagedata(rtmponmetapacket *packet, rtmpcommonmessage*
 	message->header.timestamp_delta = header.timestamp_delta;
 	message->header.payload_length = message->length;
 	m_source->push_msg(message);
-	//m_source->pop_msg();
+	m_source->record_MessageData(*message);
 	printf("receive video msg data length %d\n", message->length);
 	//printf("receive video msg data PTS is %d,insert video msg data PTS is %d\n",header.timestamps,message->header.timestamps);
 
@@ -1447,39 +1476,6 @@ int rtmpprotocol::on_audiodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 		printf("create audio data for shared error\n");
 		return -1;
 	}
-#if 0
-	char c0c3[SRS_CONSTS_RTMP_MAX_FMT0_HEADER_SIZE];
-	int len = 0;
-
-	if(fmt == 0)
-	{
-		len = create_c0_chunk(c0c3,&header);
-	}
-	else if(fmt == 1)
-	{
-		len = create_c1_chunk(c0c3,&header);
-
-	}
-	else if(fmt == 2)
-	{
-		len = create_c2_chunk(c0c3,&header);
-	}
-	else if(fmt == 3)
-	{
-		len = create_c3_chunk(c0c3,&header);
-	}
-	else
-	{
-		printf("not exist fmt in audio data message\n");
-		return -1;
-	}
-
-	char* data = new char[len + header.payload_length];
-	if(!data)
-		return -1;
-	memcpy(data,c0c3,len);
-	memcpy(data+len,msg->payload,header.payload_length);
-#endif
 	message->messagepalyload = msg->payload;
 	message->length = msg->size;
 	message->header.timestamp_delta = header.timestamp_delta;
@@ -1490,6 +1486,16 @@ int rtmpprotocol::on_audiodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	message->header.chunkid = header.chunkid;
 
 	m_source->push_msg(message);
+	if(!m_clientVec.empty())
+	{
+		//when audio has arrived need check cuurent stream protocol if has client connected
+		//if has client need send audio data to client
+		vector<int>::iterator itr = m_clientVec.begin();
+		for(;itr != m_clientVec.end(); itr++)
+		{
+			send_and_free_message_to_client(message,*itr);		
+		}
+	}
 
 	printf("receive audio msg data length %d\n", message->length);
 
@@ -1505,54 +1511,6 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 		printf("create audio data for shared error\n");
 		return -1;
 	}
-#if 0
-	char c0c3[SRS_CONSTS_RTMP_MAX_FMT0_HEADER_SIZE];
-	int len = 0;
-	//len = create_c0_chunk(c0c3,&header);
-
-	if(fmt == 0)
-	{
-		len = create_c0_chunk(c0c3,&header);
-	}
-	else if(fmt == 1)
-	{
-		len = create_c1_chunk(c0c3,&header);
-
-	}
-	else if(fmt == 2)
-	{
-		len = create_c2_chunk(c0c3,&header);
-	}
-	else if(fmt == 3)
-	{
-		len = create_c3_chunk(c0c3,&header);
-	}
-	else
-	{
-		printf("not exist fmt in video data message\n");
-		return -1;
-	}
-
-	char* data = new char[len + header.payload_length];
-	if(!data)
-		return -1;
-	memcpy(data,c0c3,len);
-	memcpy(data+len,msg->payload,header.payload_length);
-	message->messagepalyload = data;
-	message->length = len + header.payload_length;
-
-#if 0
-	static int i = 0;
-	FILE *file = NULL;
-	char name[100];
-	memset(name,0,100);
-	sprintf(name,"test_%d.file",i);
-	file = fopen(name,"w");
-	fwrite(message->messagepalyload,1,message->length,file);
-	fclose(file);
-	i++;
-#endif
-#endif
 	message->messagepalyload = msg->payload;
 	message->length = msg->size;
 	message->messagepalyload = msg->payload;
@@ -1564,6 +1522,21 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	message->header.timestamps = header.timestamps;
 	message->header.chunkid = header.chunkid;
 	m_source->push_msg(message);
+	if(flvcodec::getInstance()->video_is_sequence_header(message->messagepalyload,message->length))
+	{
+		m_source->record_videoSequenceHead(*message);	
+	}
+	m_cache.add_gop_cache(*message);
+	if(!m_clientVec.empty())
+	{
+		//when video arrive need check cuurent stream protocol if has client connected
+		//if has client need send video data to client
+		vector<int>::iterator itr = m_clientVec.begin();
+		for(;itr != m_clientVec.end(); itr++)
+		{
+			send_and_free_message_to_client(message,*itr);		
+		}
+	}
 	//m_source->pop_msg();
 	printf("receive video msg data length %d\n", message->length);
 	//printf("receive video msg data PTS is %d,insert video msg data PTS is %d\n",header.timestamps,message->header.timestamps);
@@ -2188,6 +2161,75 @@ int rtmpprotocol::response_connect_app()
 }
 
 
+int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg, int clientfd)
+{
+	char* p = msg->messagepalyload;
+	char* pend = msg->messagepalyload + msg->length;
+	char c0c3[SRS_CONSTS_RTMP_MAX_FMT0_HEADER_SIZE];
+	int hn = 0;
+	while (p < pend)
+	{
+		memset(c0c3, 0, SRS_CONSTS_RTMP_MAX_FMT0_HEADER_SIZE);
+		if (p == msg->messagepalyload)
+		{
+			//create chunk head 0
+			hn = create_c0_chunk(c0c3, &msg->header);
+			int totalsize = msg->length + hn;
+			char* sendbuf = NULL;
+			if (totalsize > 4096)
+			{
+				sendbuf = new char[4096 + hn];    //ÕâÀïÓÃchunkheaderµÄ´óĞ¡¼ÓÉÏĞ­ÉÌµÄchunksizeµÄ´óĞ¡Ô¸ÒâÊÇffmpegÔÚ
+				//½âÎöµÄÊ±ºò µ±´óÓÚchunksizeµÄ°ü»á°´ÕÕchunksize¶ÁÈ¡Êı¾İ£¬ÕâÑù¾Íµ¼ÖÂÊµÌå·¢ËÍµÄÊı¾İÃ»ÓĞchunksizeµÄ´óĞ¡
+				totalsize = 4096 + hn;
+			}
+			else
+			{
+				sendbuf = new char[totalsize];
+			}
+			memcpy(sendbuf, c0c3, hn);
+			int buflength = totalsize - hn;
+			memcpy(sendbuf + hn, p, buflength);
+			int num = ioutility::iowrite(clientfd, sendbuf, totalsize);
+			if (num < hn)
+			{
+				printf("has send client data not biger than chunk header 0\n");
+			}
+			p += (num - hn);
+			delete[] sendbuf;
+		}
+		else
+		{
+			//create chunk head 3
+			hn = create_c3_chunk(c0c3, &msg->header);
+			int remainsize = pend - p;
+			char* sendbuf = NULL;
+			if (remainsize > 4096)
+			{
+				sendbuf = new char[4096 + hn];
+				remainsize = 4096 + hn;
+			}
+			else
+			{
+				sendbuf = new char[remainsize + hn];
+				remainsize = remainsize + hn;
+			}
+			memcpy(sendbuf, c0c3, hn);
+			int buflength = remainsize - hn;
+			memcpy(sendbuf + hn, p, buflength);
+			int num = ioutility::iowrite(clientfd, sendbuf, remainsize);
+			if (num < hn)
+			{
+				printf("has send client data not biger than chunk header 0\n");
+			}
+			p += (num - hn);
+			delete[] sendbuf;
+		}
+	}
+	return 0;
+
+}
+
+
 int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg)
 {
 
@@ -2260,6 +2302,18 @@ int rtmpprotocol::pull_and_send_stream()
 {
 	if (!m_source)
 		return -1;
+	static bool isfirst = true;
+	if(isfirst)
+	{
+		//¿¿¿¿¿¿¿¿¿¿¿¿messagedata¿¿¿client¿¿¿client¿¿¿¿¿¿¿
+		isfirst = false;
+		sharedMessage msg = m_source->get_MessageData();
+		if( -1 == send_and_free_message_to_client(&msg))
+		{
+			printf("A new client need play, and message data send first take error\n");
+			return -1;
+		}
+	}
 	sharedMessage* msg = m_source->get_front();
 	if (!msg)
 		return -1;

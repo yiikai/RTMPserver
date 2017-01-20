@@ -8,6 +8,8 @@
 #include "streamsource.h"
 #include "rtmpcomplexhandshake.h"
 #include "rtmpcore.h"
+#include "gopcache.h"
+#include <vector>
 using namespace std;
 
 #define RTMP_MSG_SetChunkSize                   0x01
@@ -1146,6 +1148,8 @@ public:
 	int stream_service_cycle();
 	int pull_and_send_stream();
 private:
+	void add_play_client(int clientfd);
+private:
 	int readC0C1();
 	char* getC0C1(){
 		if (m_c0c1)
@@ -1180,6 +1184,8 @@ private:
 	int on_amfmessagedata(rtmponmetapacket *packet,rtmpcommonmessage* msg, rtmpcommonmessageheader header,int fmt, int amftype);
 	int send_and_free_packet(rtmpcommonpacket* packet, int stream_id);
 	int send_and_free_message_to_client(sharedMessage* msg);
+	int send_and_free_message_to_client(sharedMessage* msg, int clientfd);
+	void send_gop_cache(gopcache& cache);
 	int do_packet_send(rtmpcommonmessageheader* mh, char* payload, int size);
 	int create_c0_chunk(char* chunk,sharedMessageheader* mh);
     int create_c0_chunk(char* chunk,rtmpcommonmessageheader* mh);
@@ -1197,11 +1203,16 @@ private:
 	int m_fd;
 
 	int default_chunksize;
-	
+	gopcache m_cache;	
 	//chunkstream map for search every chunk with cid
 	map<int,chunkstream*> m_chunkstreammap;
     HandType m_handtype;
-
+	/*
+	 * if the rtmpportocl is belong to publish streamsource , need us clientvec to record
+	 * how many play client need it, and when video and audio data has come, it should send 
+	 * them to all client in clientVec
+	 */
+	vector<int> m_clientVec;  
 	
 	//chunk message 成员
 //	int m_fmt;

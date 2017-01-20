@@ -15,7 +15,7 @@ public:
 	bool createconnection(char* ip, int port);
 	void dostreamingservice();
 
-	void pullandsendstream();
+	int pullandsendstream();
 
 private:
 	RTMPSTATUS m_status;

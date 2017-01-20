@@ -21,7 +21,7 @@ public:
 
 	virtual bool createconnection(char* ip, int port) = 0;
 	virtual void dostreamingservice() = 0;
-	virtual void pullandsendstream() = 0; 
+	virtual int pullandsendstream() = 0; 
 protected:
 	int m_sockfd;
 };

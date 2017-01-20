@@ -33,7 +33,7 @@ void tcplistener::dostreamingservice()
 
 connection* tcplistener::acceptclient()
 {
-	printf("new client has arrived need do someting\n");
+	//printf("new client has arrived need do someting\n");
 	int clifd;
 	struct sockaddr_in cliaddr;
 	bzero(&cliaddr,sizeof(struct sockaddr_in));
@@ -41,14 +41,14 @@ connection* tcplistener::acceptclient()
     clifd = accept(m_sockfd,(struct sockaddr*)&cliaddr,&cliaddrlen);
      if (clifd == -1)
      {
-         printf("accpet error:");
-		 printf("%s\n",strerror(errno));
+         //printf("accpet error:");
+		 //printf("%s\n",strerror(errno));
          return NULL;
      }
      else
      {
      	//添加一个客户描述符和事件
-        printf("accept a new client: %s:%d\n",inet_ntoa(cliaddr.sin_addr),cliaddr.sin_port);
+        //printf("accept a new client: %s:%d\n",inet_ntoa(cliaddr.sin_addr),cliaddr.sin_port);
         tcpconnection* clientconnect = new tcpconnection(clifd);
         return clientconnect;
      }

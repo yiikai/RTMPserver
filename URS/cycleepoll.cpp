@@ -51,7 +51,7 @@ void cycleepoll::modifyconnectionsocketfd(fdtype type,int fd)
     int ret = epoll_ctl(m_epollfd,EPOLL_CTL_MOD,fd,&ep_event);
 	if(ret == -1)
 	{
-		printf("epool mod fd error, %s\n",strerror(errno));
+		//printf("epool mod fd error, %s\n",strerror(errno));
 	}		
 }
 
@@ -80,7 +80,8 @@ void cycleepoll::addclientconnection(connection* conn)
 	struct epoll_event ep_event;
     ep_event.events = EPOLLIN;
     ep_event.data.fd = conn->getfd();
-    epoll_ctl(m_epollfd,EPOLL_CTL_ADD,conn->getfd(),&ep_event);
+    int ret = epoll_ctl(m_epollfd,EPOLL_CTL_ADD,conn->getfd(),&ep_event);
+	printf("add epoll fd %d\n",ret);
 }
 
 void cycleepoll::delclientconnection(connection* conn)
@@ -123,22 +124,28 @@ void cycleepoll::startcycle()
 		int fdnum = epoll_wait(m_epollfd, events, MAX_CONNECTION_SIZE , -1);
 		if(fdnum == -1)
 		{
-			printf("no event is ready\n");
+			//printf("no event is ready\n");
 			break;
 		}
 		else if(fdnum == 0)
 		{
 			continue;
 		}
-		printf("active fd num is %d\n",fdnum);
+		//printf("active fd num is %d\n",fdnum);
 		for(int i = 0; i < fdnum; i++)
 		{
-			printf("number %d\n",i);
+			//printf("fd number is %d\n",events[i].data.fd);
+
+			if(events[i].data.fd == 11)
+			{
+				printf("client arrive\n");
+			}
+
 			map<int,connection*>::iterator itr;
 			itr = m_fdmap.find(events[i].data.fd);
 			if(itr != m_fdmap.end())  //check if current active fd is Server listen fd
 			{
-				printf("active client fd is %d\n",events[i].data.fd);
+				//printf("active client fd is %d\n",events[i].data.fd);
 				connection* cli = ((tcplistener*)(itr->second))->acceptclient();
 				addclientconnection(cli);
 				continue;
@@ -146,14 +153,20 @@ void cycleepoll::startcycle()
 			itr = m_fdclimap.find(events[i].data.fd);
 			if(itr == m_fdclimap.end())
 			{
-				printf("This connection is not exist in client map , cli fd is %d\n",events[i].data.fd);
+				//printf("This connection is not exist in client map , cli fd is %d\n",events[i].data.fd);
 				continue;
 			}
 			if(events[i].events == EPOLLOUT)
 			{
 				//If events can write it must be a client connect to server , so need pull AV stream 
-				printf("client %d want pull stream and need send AV stream\n",events[i].data.fd);
-				itr->second->pullandsendstream();
+				//printf("client %d want pull stream and need send AV stream\n",events[i].data.fd);
+				int value = itr->second->pullandsendstream();
+				printf("value is %d\n", value);
+				if ( -1 == value )
+				{
+					//printf("client has stoped connect with server, remove the client from server\n");
+					delclientconnection(events[i].data.fd);
+				}
 				continue;
 			}else
 			{

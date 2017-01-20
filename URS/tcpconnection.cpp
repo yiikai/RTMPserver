@@ -17,10 +17,10 @@ bool tcpconnection::createconnection(char* ip, int port)
 	return true;
 }
 
-void tcpconnection::pullandsendstream()
+int tcpconnection::pullandsendstream()
 {
-	printf("client use protocol pull stream\n");
-	m_protocol->pull_and_send_stream();
+	//printf("client use protocol pull stream\n");
+	return m_protocol->pull_and_send_stream();
 }
 
 
@@ -28,7 +28,7 @@ void tcpconnection::dostreamingservice()
 {
 		switch(m_status)
 		{
-		case RTMPSTATUS_NOCONNECT:
+			case RTMPSTATUS_NOCONNECT:
 			case RTMPSTATUS_HANDSHAKEC0C1:
 			{
 				m_protocol->handle_handshakeC0C1();      
@@ -50,7 +50,7 @@ void tcpconnection::dostreamingservice()
 			}break;
 			default:
 			{
-				printf("not right status\n");
+				//printf("not right status\n");
 			}break;
 		}
 		

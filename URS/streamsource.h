@@ -5,22 +5,8 @@
 #include <queue>
 using namespace std;
 
-class sharedMessageheader;
-class sharedMessage;
+class rtmpprotocol;
 
-class rtmpstreamsource
-{
-public:
-	rtmpstreamsource(){}
-	~rtmpstreamsource(){}
-public:
-	void push_msg(sharedMessage* msg);
-	void pop_msg();
-	sharedMessage* get_front();
-private:
-	queue<sharedMessage*> m_sharequeue;
-	
-};
 
 class sharedMessageheader
 {
@@ -40,7 +26,6 @@ public:
 	int stream_id;
 	int timestamps; 
 	int chunkid;
-	char* data;
 };
 
 class sharedMessage
@@ -48,7 +33,8 @@ class sharedMessage
 public:
 	sharedMessage(){}
 	~sharedMessage(){}
-	
+	sharedMessage(const sharedMessage& message);
+	sharedMessage& operator=(const sharedMessage& message);
 public:
 	sharedMessageheader header;
 	char* payload;
@@ -58,12 +44,48 @@ public:
 	
 };
 
+
+class rtmpstreamsource
+{
+public:
+	rtmpstreamsource(rtmpprotocol* rp):m_rp(NULL){
+		m_rp = rp;
+	}   //将相关连的protocol和source关联起来，方便与streamsource的client的管理
+	~rtmpstreamsource(){}
+public:
+	void push_msg(sharedMessage* msg);
+	void pop_msg();
+	void record_MessageData(const sharedMessage& message);
+	void record_videoSequenceHead(const sharedMessage& message);
+	sharedMessage& get_MessageData()
+	{
+		return m_messagedata;
+	}
+	sharedMessage& get_Video_Sequence_Head()
+	{
+		return m_videosequnecehead;
+	}
+
+	sharedMessage* get_front();
+	rtmpprotocol* get_rtmpprotocol(){
+		if(!m_rp)
+			return NULL;
+		return m_rp;
+	}
+private:
+	queue<sharedMessage*> m_sharequeue;
+	sharedMessage        m_messagedata;
+	sharedMessage        m_videosequnecehead;
+	rtmpprotocol*        m_rp;
+};
+
+
 class streamsource
 {
 public:
 	~streamsource();
 	rtmpstreamsource* findsource(requestinfo* req);
-	rtmpstreamsource* createsource(requestinfo* req);
+	rtmpstreamsource* createsource(requestinfo* req,rtmpprotocol* cp);
 	static streamsource* getInstance();
 private:
 	streamsource();

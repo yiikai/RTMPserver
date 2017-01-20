@@ -37,10 +37,10 @@ int srs_amf0_read_string(streamworker* stream, string& value)
     if (marker != RTMP_AMF0_String) {
         ret = -1;
         printf("amf0 check string marker failed. "
-            "marker=%#x, required=%#x, ret=%d\n", marker, RTMP_AMF0_String, ret);
+		"marker=%#x, required=%#x, ret=%d\n", marker, RTMP_AMF0_String, ret);
         return ret;
     }
-    printf("amf0 read string marker success");
+    //printf("amf0 read string marker success");
     
     return srs_amf0_read_utf8(stream, value);
 }
@@ -52,12 +52,12 @@ int srs_amf0_read_utf8(streamworker* stream, string& value)
         // len
         
         short len = stream->read_2bytes();
-        printf("amf0 read string length success. len=%d\n", len);
+        //printf("amf0 read string length success. len=%d\n", len);
         
         // empty string
         if (len <= 0) {
             ret = -1;
-            printf("amf0 read empty string. ret=%d\n", ret);
+            //printf("amf0 read empty string. ret=%d\n", ret);
             return ret;
         }
         
@@ -66,7 +66,7 @@ int srs_amf0_read_utf8(streamworker* stream, string& value)
         std::string str = stream->read_string(len);
         
         value = str;
-        printf("amf0 read string data success. str=%s\n", str.c_str());
+        //printf("amf0 read string data success. str=%s\n", str.c_str());
         
         return ret;
 }
@@ -82,13 +82,13 @@ int srs_amf0_read_number(streamworker* stream, double& value)
             "marker=%#x, required=%#x, ret=%d\n", marker, RTMP_AMF0_Number, ret);
         return ret;
     }
-    printf("amf0 read number marker success\n");
+    //printf("amf0 read number marker success\n");
 
     // value
     long long temp = stream->read_8bytes();
     memcpy(&value, &temp, 8);
     
-    printf("amf0 read number value success. value=%.2f\n", value);
+    //printf("amf0 read number value success. value=%.2f\n", value);
     
     return ret;
 }
@@ -101,7 +101,7 @@ int srs_amf0_read_boolean(streamworker* stream, bool& value)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 read bool marker failed. ret=%d\n", ret);
+        //printf("amf0 read bool marker failed. ret=%d\n", ret);
         return ret;
     }
     
@@ -112,18 +112,18 @@ int srs_amf0_read_boolean(streamworker* stream, bool& value)
             "marker=%#x, required=%#x, ret=%d\n", marker, RTMP_AMF0_Boolean, ret);
         return ret;
     }
-    printf("amf0 read bool marker success\n");
+    //printf("amf0 read bool marker success\n");
 
     // value
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 read bool value failed. ret=%d\n", ret);
+        //printf("amf0 read bool value failed. ret=%d\n", ret);
         return ret;
     }
 
     value = (stream->read_1byte() != 0);
     
-    printf("amf0 read bool value success. value=%d\n", value);
+    //printf("amf0 read bool value success. value=%d\n", value);
     
     return ret;
 }
@@ -135,7 +135,7 @@ int srs_amf0_read_undefined(streamworker* stream)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 read undefined marker failed. ret=%d\n", ret);
+        //printf("amf0 read undefined marker failed. ret=%d\n", ret);
         return ret;
     }
     
@@ -146,7 +146,7 @@ int srs_amf0_read_undefined(streamworker* stream)
             "marker=%#x, required=%#x, ret=%d\n", marker, RTMP_AMF0_Undefined, ret);
         return ret;
     }
-    printf("amf0 read undefined success\n");
+    //printf("amf0 read undefined success\n");
     
     return ret;
 }
@@ -158,7 +158,7 @@ int srs_amf0_read_null(streamworker* stream)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 read null marker failed. ret=%d\n", ret);
+        //printf("amf0 read null marker failed. ret=%d\n", ret);
         return ret;
     }
     
@@ -169,7 +169,7 @@ int srs_amf0_read_null(streamworker* stream)
             "marker=%#x, required=%#x, ret=%d\n", marker, RTMP_AMF0_Null, ret);
         return ret;
     }
-    printf("amf0 read null success\n");
+    //printf("amf0 read null success\n");
     
     return ret;
 }
@@ -192,12 +192,12 @@ int srs_amf0_read_any(streamworker* stream, Amf0Any** ppvalue)
     int ret = 0;
 
     if ((ret = Amf0Any::discovery(stream, ppvalue)) != 0) {
-        printf("amf0 discovery any elem failed. ret=%d\n", ret);
+        //printf("amf0 discovery any elem failed. ret=%d\n", ret);
         return ret;
     }
 
     if ((ret = (*ppvalue)->read(stream)) != 0) {
-        printf("amf0 parse elem failed. ret=%d\n", ret);
+        //printf("amf0 parse elem failed. ret=%d\n", ret);
         return ret;
     }
     
@@ -211,16 +211,16 @@ int srs_amf0_write_boolean(streamworker* stream, bool value)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write bool marker failed. ret=%d\n", ret);
+        //printf("amf0 write bool marker failed. ret=%d\n", ret);
         return ret;
     }
     stream->write1bytes(RTMP_AMF0_Boolean);
-    printf("amf0 write bool marker success");
+    //printf("amf0 write bool marker success");
 
     // value
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write bool value failed. ret=%d\n", ret);
+        //printf("amf0 write bool value failed. ret=%d\n", ret);
         return ret;
     }
 
@@ -230,7 +230,7 @@ int srs_amf0_write_boolean(streamworker* stream, bool value)
         stream->write1bytes(0x00);
     }
     
-    printf("amf0 write bool value success. value=%d\n", value);
+    //printf("amf0 write bool value success. value=%d\n", value);
     
     return ret;
 }
@@ -242,12 +242,12 @@ int srs_amf0_write_string(streamworker* stream, string value)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write string marker failed. ret=%d\n", ret);
+        //printf("amf0 write string marker failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write1bytes(RTMP_AMF0_String);
-    printf("amf0 write string marker success");
+    //printf("amf0 write string marker success");
     
     return srs_amf0_write_utf8(stream, value);
 }
@@ -260,26 +260,26 @@ int srs_amf0_write_string(streamworker* stream, string value)
         // len
         if (!stream->require(2)) {
             ret = -1;
-            printf("amf0 write string length failed. ret=%d\n", ret);
+            //printf("amf0 write string length failed. ret=%d\n", ret);
             return ret;
         }
         stream->write2bytes(value.length());
-        printf("amf0 write string length success. len=%d\n", (int)value.length());
+        //printf("amf0 write string length success. len=%d\n", (int)value.length());
         
         // empty string
         if (value.length() <= 0) {
-            printf("amf0 write empty string. ret=%d\n", ret);
+            //printf("amf0 write empty string. ret=%d\n", ret);
             return ret;
         }
         
         // data
         if (!stream->require(value.length())) {
             ret = -1;
-            printf("amf0 write string data failed. ret=%d\n", ret);
+            //printf("amf0 write string data failed. ret=%d\n", ret);
             return ret;
         }
         stream->write_stream(value.c_str(),value.length());
-        printf("amf0 write string data success. str=%s\n", value.c_str());
+        //printf("amf0 write string data success. str=%s\n", value.c_str());
         
         return ret;
     }
@@ -292,17 +292,17 @@ int srs_amf0_write_number(streamworker* stream, double value)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write number marker failed. ret=%d\n", ret);
+        //printf("amf0 write number marker failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write1bytes(RTMP_AMF0_Number);
-    printf("amf0 write number marker success");
+    //printf("amf0 write number marker success");
 
     // value
     if (!stream->require(8)) {
         ret = -1;
-        printf("amf0 write number value failed. ret=%d\n", ret);
+        //printf("amf0 write number value failed. ret=%d\n", ret);
         return ret;
     }
 
@@ -310,7 +310,7 @@ int srs_amf0_write_number(streamworker* stream, double value)
     memcpy(&temp, &value, 8);
     stream->write8bytes(temp);
     
-    printf("amf0 write number value success. value=%.2f\n", value);
+    //printf("amf0 write number value success. value=%.2f\n", value);
     
     return ret;
 }
@@ -323,12 +323,12 @@ int srs_amf0_write_null(streamworker* stream)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write null marker failed. ret=%d\n", ret);
+        //printf("amf0 write null marker failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write1bytes(RTMP_AMF0_Null);
-    printf("amf0 write null marker success\n");
+    //printf("amf0 write null marker success\n");
     
     return ret;
 }
@@ -340,12 +340,12 @@ int srs_amf0_write_undefined(streamworker* stream)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write undefined marker failed. ret=%d\n", ret);
+        //printf("amf0 write undefined marker failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write1bytes(RTMP_AMF0_Undefined);
-    printf("amf0 write undefined marker success\n");
+    //printf("amf0 write undefined marker success\n");
     
     return ret;
 }
@@ -408,12 +408,12 @@ int amf0object::read(streamworker* stream)
     while(!stream->isempty())
     {
         if (srs_amf0_is_object_eof(stream)) {
-            printf("amf0 read object EOF.\n");
+            //printf("amf0 read object EOF.\n");
             break;
         }
         std::string property_name;
         if ((ret = srs_amf0_read_utf8(stream, property_name)) != 0) {
-            printf("amf0 object read property name failed. ret=%d\n", ret);
+            //printf("amf0 object read property name failed. ret=%d\n", ret);
             return ret;
         }
 
@@ -478,12 +478,12 @@ int amf0object::write(streamworker* stream)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write object marker failed. ret=%d\n", ret);
+        //printf("amf0 write object marker failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write1bytes(RTMP_AMF0_Object);
-    printf("amf0 write object marker success\n");
+    //printf("amf0 write object marker success\n");
 
     vector< pair<string,Amf0Any*> >::iterator itr = m_prop.begin();
     for (; itr != m_prop.end(); itr++) {
@@ -491,16 +491,16 @@ int amf0object::write(streamworker* stream)
         Amf0Any* any = itr->second;
         
         if ((ret = srs_amf0_write_utf8(stream, name)) != 0) {
-            printf("write object property name failed. ret=%d\n", ret);
+            //printf("write object property name failed. ret=%d\n", ret);
             return ret;
         }
         
         if ((ret = srs_amf0_write_any(stream, any)) != 0) {
-            printf("write object property value failed. ret=%d\n", ret);
+            //printf("write object property value failed. ret=%d\n", ret);
             return ret;
         }
         
-        printf("write amf0 property success. name=%s\n", name.c_str());
+        //printf("write amf0 property success. name=%s\n", name.c_str());
     }
     //Amf0 object need add 0x00 0x00 0x09 to be end flag
     stream->write2bytes(0x00);
@@ -524,18 +524,18 @@ int Amf0Any::discovery(streamworker* stream, Amf0Any** ppvalue)
     
     // detect the object-eof specially
     if (srs_amf0_is_object_eof(stream)) {
-        printf("amf0 is ending \n");
+        //printf("amf0 is ending \n");
         return -1;
     }
 
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 read any marker failed. ret=%d\n", ret);
+        //printf("amf0 read any marker failed. ret=%d\n", ret);
         return ret;
     }
 
     char marker = stream->read_1byte();
-    printf("amf0 any marker success\n");
+    //printf("amf0 any marker success\n");
     stream->streamback(-1);
 
     switch(marker)
@@ -579,7 +579,7 @@ int Amf0Any::discovery(streamworker* stream, Amf0Any** ppvalue)
         case RTMP_AMF0_Invalid:
         default: {
             ret = -1;
-            printf("invalid amf0 message type. marker=%#x, ret=%d\n", marker, ret);
+            //printf("invalid amf0 message type. marker=%#x, ret=%d\n", marker, ret);
             return ret;
         }
     }
@@ -776,22 +776,22 @@ int Amf0EcmaArray::write(streamworker* stream)
     // marker
     if (!stream->require(1)) {
         ret = -1;
-        printf("amf0 write ecma_array marker failed. ret=%d\n", ret);
+        //printf("amf0 write ecma_array marker failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write1bytes(RTMP_AMF0_EcmaArray);
-    printf("amf0 write ecma_array marker success\n");
+    //printf("amf0 write ecma_array marker success\n");
 
     // count
     if (!stream->require(4)) {
         ret = -1;
-        printf("amf0 write ecma_array count failed. ret=%d\n", ret);
+        //printf("amf0 write ecma_array count failed. ret=%d\n", ret);
         return ret;
     }
     
     stream->write4bytes(m_prop.size());
-    printf("amf0 write ecma_array count success. count=%d\n", m_prop.size());
+    //printf("amf0 write ecma_array count success. count=%d\n", m_prop.size());
     
     // value
     for (int i = 0; i < m_prop.size(); i++) {
@@ -799,21 +799,21 @@ int Amf0EcmaArray::write(streamworker* stream)
         Amf0Any* any = m_prop[i].second;
         
         if ((ret = srs_amf0_write_utf8(stream, name)) != 0) {
-            printf("write ecma_array property name failed. ret=%d\n", ret);
+            //printf("write ecma_array property name failed. ret=%d\n", ret);
             return ret;
         }
         
         if ((ret = srs_amf0_write_any(stream, any)) != 0) {
-            printf("write ecma_array property value failed. ret=%d\n", ret);
+            //printf("write ecma_array property value failed. ret=%d\n", ret);
             return ret;
         }
         
-        printf("write amf0 property success. name=%s\n", name.c_str());
+        //printf("write amf0 property success. name=%s\n", name.c_str());
     }
     
     stream->write2bytes(0x00);
     stream->write1bytes(0x09);
-    printf("write ecma_array object success.\n");
+    //printf("write ecma_array object success.\n");
     
     return ret;
 }   

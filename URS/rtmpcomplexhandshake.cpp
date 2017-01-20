@@ -117,7 +117,7 @@ key_block::key_block()
 	if (random0_size > 0) {
 		random0 = new char[random0_size];
 		random_generate(random0, random0_size);
-		// snprintf(random0, random0_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
+		// sn//printf(random0, random0_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
 	}
 
 	random_generate(key, sizeof(key));
@@ -126,7 +126,7 @@ key_block::key_block()
 	if (random1_size > 0) {
 		random1 = new char[random1_size];
 		random_generate(random1, random1_size);
-		//  snprintf(random1, random1_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
+		//  sn//printf(random1, random1_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
 	}
 
 }
@@ -193,7 +193,7 @@ digest_block::digest_block()
 	if (random0_size > 0) {
 		random0 = new char[random0_size];
 		random_generate(random0, random0_size);
-		//snprintf(random0, random0_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
+		//sn//printf(random0, random0_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
 	}
 
 	random_generate(digest, sizeof(digest));
@@ -202,7 +202,7 @@ digest_block::digest_block()
 	if (random1_size > 0) {
 		random1 = new char[random1_size];
 		random_generate(random1, random1_size);
-		// snprintf(random1, random1_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
+		// sn//printf(random1, random1_size, "%s", RTMP_SIG_SRS_HANDSHAKE);
 	}
 }
 
@@ -270,7 +270,7 @@ int c1s1::parse(char* _c1s1, int size, Hschem schema)
 
 	if (schema != HAND_SHAKE_SCHEMA0 && schema != HAND_SHAKE_SCHEMA1) {
 		ret = -1;
-		printf("parse c1 failed. invalid schema=%d, ret=%d", schema, ret);
+		//printf("parse c1 failed. invalid schema=%d, ret=%d", schema, ret);
 		return ret;
 	}
 
@@ -309,7 +309,7 @@ int c1s1::s1_create(c1s1* c1)
 
 	if (c1->schema() != HAND_SHAKE_SCHEMA0 && c1->schema() != HAND_SHAKE_SCHEMA1) {
 		ret = -1;
-		printf("create s1 failed. invalid schema=%d, ret=%d", c1->schema(), ret);
+		//printf("create s1 failed. invalid schema=%d, ret=%d", c1->schema(), ret);
 		return ret;
 	}
 
@@ -374,10 +374,10 @@ int c1s1_strategy::calc_s1_digest(c1s1* owner, char*& s1_digest)
 
 	s1_digest = new char[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(URS_GenuineFPKey, 36, c1s1_joined_bytes, 1536 - 32, s1_digest)) != 0) {
-		printf("calc digest for s1 failed. ret=%d\n", ret);
+		//printf("calc digest for s1 failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("digest calculated for s1\n");
+	//printf("digest calculated for s1\n");
 
 	return ret;
 }
@@ -389,7 +389,7 @@ int c1s1_strategy::s1_validate_digest(c1s1* owner, bool& is_valid)
 	char* s1_digest = NULL;
 
 	if ((ret = calc_s1_digest(owner, s1_digest)) != 0) {
-		printf("validate s1 error, failed to calc digest. ret=%d", ret);
+		//printf("validate s1 error, failed to calc digest. ret=%d", ret);
 		return ret;
 	}
 
@@ -422,7 +422,7 @@ int c1s1_strategy::s1_create(c1s1* owner, c1s1* c1)
 	// @see: https://github.com/ossrs/srs/issues/148
 	int pkey_size = 128;
 	if ((ret = dh.copy_shared_key(c1->get_key(), 128, key.key, pkey_size)) != 0) {
-		printf("calc s1 key failed. ret=%d", ret);
+		//printf("calc s1 key failed. ret=%d", ret);
 		return ret;
 	}
 
@@ -430,19 +430,19 @@ int c1s1_strategy::s1_create(c1s1* owner, c1s1* c1)
 	// we just ignore the actual key size, but if need to use the key, must use the actual size.
 	// TODO: FIXME: use the actual key size.
 	//srs_assert(pkey_size == 128);
-	printf("calc s1 key success.\n");
+	//printf("calc s1 key success.\n");
 
 	char* s1_digest = NULL;
 	if ((ret = calc_s1_digest(owner, s1_digest)) != 0) {
-		printf("calc s1 digest failed. ret=%d\n", ret);
+		//printf("calc s1 digest failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("calc s1 digest success.\n");
+	//printf("calc s1 digest success.\n");
 
 	assert(s1_digest != NULL);
 
 	memcpy(digest.digest, s1_digest, 32);
-	printf("copy s1 key success.");
+	//printf("copy s1 key success.");
 
 	return ret;
 }
@@ -455,7 +455,7 @@ int c1s1_strategy::c1_validate_digest(c1s1* owner, bool& is_valid)
 	char* c1_digest = NULL;
 
 	if ((ret = calc_c1_digest(owner, c1_digest)) != 0) {
-		printf("validate c1 error, failed to calc digest. ret=%d", ret);
+		//printf("validate c1 error, failed to calc digest. ret=%d", ret);
 		return ret;
 	}
 
@@ -493,10 +493,10 @@ int c1s1_strategy::calc_c1_digest(c1s1* owner, char*& c1_digest)
 
 	c1_digest = new char[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(URS_GenuineFPKey, 30, c1s1_joined_bytes, 1536 - 32, c1_digest)) != 0) {
-		printf("calc digest for c1 failed. ret=%d\n", ret);
+		//printf("calc digest for c1 failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("digest calculated for c1\n");
+	//printf("digest calculated for c1\n");
 
 	return ret;
 }
@@ -577,18 +577,18 @@ int c1s1_strategy_schema1::parse(char* _c1s1, int size)
 	stream.init(_c1s1 + 8, 764);
 
 	if ((ret = digest.parse(&stream)) != 0) {
-		printf("parse the c1 digest failed. ret=%d", ret);
+		//printf("parse the c1 digest failed. ret=%d", ret);
 		return ret;
 	}
 
 	stream.init(_c1s1 + 8 + 764, 764);
 
 	if ((ret = key.parse(&stream)) != 0) {
-		printf("parse the c1 key failed. ret=%d", ret);
+		//printf("parse the c1 key failed. ret=%d", ret);
 		return ret;
 	}
 
-	printf("parse c1 digest-key success\n");
+	//printf("parse c1 digest-key success\n");
 
 	return ret;
 }
@@ -655,18 +655,18 @@ int c1s1_strategy_schema0::parse(char* _c1s1, int size)
 	stream.init(_c1s1 + 8, 764);
 
 	if ((ret = key.parse(&stream)) != 0) {
-		printf("parse the c1 key failed. ret=%d", ret);
+		//printf("parse the c1 key failed. ret=%d", ret);
 		return ret;
 	}
 
 	stream.init(_c1s1 + 8 + 764, 764);
 
 	if ((ret = digest.parse(&stream)) != 0) {
-		printf("parse the c1 digest failed. ret=%d", ret);
+		//printf("parse the c1 digest failed. ret=%d", ret);
 		return ret;
 	}
 
-	printf("parse c1 key-digest success");
+	//printf("parse c1 key-digest success");
 
 	return ret;
 }
@@ -704,7 +704,7 @@ int SrsDH::initialize(bool ensure_128bytes_public_key)
 		if (ensure_128bytes_public_key) {
 			int key_size = BN_num_bytes(pdh->pub_key);
 			if (key_size != 128) {
-				printf("regenerate 128B key, current=%dB\n", key_size);
+				//printf("regenerate 128B key, current=%dB\n", key_size);
 				continue;
 			}
 		}
@@ -755,7 +755,7 @@ int SrsDH::copy_shared_key(const char* ppkey, int32_t ppkey_size, char* skey, in
 	int key_size = DH_compute_key((unsigned char*)skey, ppk, pdh);
 
 	if (key_size < ppkey_size) {
-		printf("shared key size=%d, ppk_size=%d\n", key_size, ppkey_size);
+		//printf("shared key size=%d, ppk_size=%d\n", key_size, ppkey_size);
 	}
 
 	if (key_size < 0 || key_size > skey_size) {
@@ -861,17 +861,17 @@ int c2s2::c2_create(c1s1* s1)
 
 	char temp_key[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(URS_GenuineFPKey, 62, s1->get_digest(), 32, temp_key)) != 0) {
-		printf("create c2 temp key failed. ret=%d\n", ret);
+		//printf("create c2 temp key failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate c2 temp key success.\n");
+	//printf("generate c2 temp key success.\n");
 
 	char _digest[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(temp_key, 32, random, 1504, _digest)) != 0) {
-		printf("create c2 digest failed. ret=%d\n", ret);
+		//printf("create c2 digest failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate c2 digest success.\n");
+	//printf("generate c2 digest success.\n");
 
 	memcpy(digest, _digest, 32);
 
@@ -885,17 +885,17 @@ int c2s2::c2_validate(c1s1* s1, bool& is_valid)
 
 	char temp_key[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(URS_GenuineFPKey, 62, s1->get_digest(), 32, temp_key)) != 0) {
-		printf("create c2 temp key failed. ret=%d\n", ret);
+		//printf("create c2 temp key failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate c2 temp key success.\n");
+	//printf("generate c2 temp key success.\n");
 
 	char _digest[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(temp_key, 32, random, 1504, _digest)) != 0) {
-		printf("create c2 digest failed. ret=%d\n", ret);
+		//printf("create c2 digest failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate c2 digest success.\n");
+	//printf("generate c2 digest success.\n");
 
 	is_valid = bytes_equals(digest, _digest, 32);
 
@@ -908,17 +908,17 @@ int c2s2::s2_create(c1s1* c1)
 
 	char temp_key[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(URS_GenuineFMSKey, 68, c1->get_digest(), 32, temp_key)) != 0) {
-		printf("create s2 temp key failed. ret=%d\n", ret);
+		//printf("create s2 temp key failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate s2 temp key success.\n");
+	//printf("generate s2 temp key success.\n");
 
 	char _digest[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(temp_key, 32, random, 1504, _digest)) != 0) {
-		printf("create s2 digest failed. ret=%d\n", ret);
+		//printf("create s2 digest failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate s2 digest success.\n");
+	//printf("generate s2 digest success.\n");
 
 	memcpy(digest, _digest, 32);
 
@@ -932,17 +932,17 @@ int c2s2::s2_validate(c1s1* c1, bool& is_valid)
 
 	char temp_key[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(URS_GenuineFMSKey, 68, c1->get_digest(), 32, temp_key)) != 0) {
-		printf("create s2 temp key failed. ret=%d\n", ret);
+		//printf("create s2 temp key failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate s2 temp key success.\n");
+	//printf("generate s2 temp key success.\n");
 
 	char _digest[OPENSSL_HASH_SIZE];
 	if ((ret = openssl_HMACsha256(temp_key, 32, random, 1504, _digest)) != 0) {
-		printf("create s2 digest failed. ret=%d\n", ret);
+		//printf("create s2 digest failed. ret=%d\n", ret);
 		return ret;
 	}
-	printf("generate s2 digest success.\n");
+	//printf("generate s2 digest success.\n");
 
 	is_valid = bytes_equals(digest, _digest, 32);
 

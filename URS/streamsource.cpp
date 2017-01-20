@@ -1,7 +1,35 @@
 #include "streamsource.h"
-
+#include "rtmpprotocol.h"
+#include <string.h>
 streamsource streamsource::m_instance;
 map<string , rtmpstreamsource*> streamsource::m_pool;
+
+
+sharedMessageheader header;
+	char* payload;
+
+	char* messagepalyload;
+	int length;
+
+
+sharedMessage::sharedMessage(const sharedMessage& message)
+{
+	header = message.header;
+	length = message.length;
+	messagepalyload = new char[length];
+	memcpy(messagepalyload,message.messagepalyload,length);
+}
+	
+sharedMessage& sharedMessage::operator=(const sharedMessage& message)
+{
+	header = message.header;
+	length = message.length;
+	messagepalyload = new char[length];
+	memcpy(messagepalyload,message.messagepalyload,length);
+	return *this;
+}
+
+
 
 
 void rtmpstreamsource::push_msg(sharedMessage* msg)
@@ -10,9 +38,21 @@ void rtmpstreamsource::push_msg(sharedMessage* msg)
 }
 
 void rtmpstreamsource::pop_msg()
-{
+{
 	m_sharequeue.pop();
 }
+
+void rtmpstreamsource::record_MessageData(const sharedMessage& message)
+{
+	m_messagedata = message;
+}
+
+
+void rtmpstreamsource::record_videoSequenceHead(const sharedMessage& message)
+{
+	m_videosequnecehead = message;
+}
+
 
 sharedMessage* rtmpstreamsource::get_front()
 {
@@ -47,9 +87,9 @@ rtmpstreamsource* streamsource::findsource(requestinfo* req)
 	return itr->second;
 }
 
-rtmpstreamsource* streamsource::createsource(requestinfo* req)
+rtmpstreamsource* streamsource::createsource(requestinfo* req,rtmpprotocol* rp)
 {
-	rtmpstreamsource* source = new rtmpstreamsource();
+	rtmpstreamsource* source = new rtmpstreamsource(rp);
 	m_pool.insert(make_pair<string,rtmpstreamsource*>(req->tcUrl,source));
 	return source;
 }	

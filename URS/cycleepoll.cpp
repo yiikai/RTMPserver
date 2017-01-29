@@ -1,5 +1,6 @@
 #include "cycleepoll.h"
 #include "tcplistener.h"
+#include "signalhandler.h"
 #include <errno.h>
 
 int cycleepoll::m_epollfd = -1;
@@ -103,6 +104,7 @@ void cycleepoll::delclientconnection(int fd)
 	}
 }
 
+
 bool cycleepoll::init()
 {
 	m_epollfd = epoll_create(MAX_CONNECTION_SIZE);
@@ -112,6 +114,9 @@ bool cycleepoll::init()
   	{
    		return false;
   	}
+	//ignore SIGPIPE signal , when client close server will send AV data and get this signal
+	//thus process will be closed
+	signalhandler::deny_signal(SIGPIPE);
   	return true;
 }
 

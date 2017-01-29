@@ -1648,7 +1648,7 @@ int rtmpprotocol::recv_interlaced_message(rtmpcommonmessage** msg, rtmpcommonmes
 
 	if ((ret = readbasicheader(fmt, cid)) != 0)
 	{
-		printf("read basic header failed. ret = %d\n", ret);
+		//printf("read basic header failed. ret = %d\n", ret);
 		return -1;
 	}
 	chunkfmt = fmt;
@@ -1877,7 +1877,7 @@ int rtmpprotocol::readmessagepayload(chunkstream* chunk, char fmt)
 			int cid = 0;
 			if ((ret = readbasicheader(fmt, cid)) != 0)
 			{
-				printf("read basic header failed. ret = %d\n", ret);
+				//printf("read basic header failed. ret = %d\n", ret);
 			}
 			if (fmt == 0x03)
 			{
@@ -1939,7 +1939,7 @@ int rtmpprotocol::readbasicheader(char& fmt, int& cid)
 	int ret = ioutility::ioread(m_fd, (char*)&fmt, 1);
 	if (ret == 0)
 	{
-		printf("read fmt error, the socket fd has empty,read size is %d\n", ret);
+		//printf("read fmt error, the socket fd has empty,read size is %d\n", ret);
 		return -1;
 	}
 	cid = fmt & 0x3f;
@@ -1957,7 +1957,11 @@ int rtmpprotocol::readbasicheader(char& fmt, int& cid)
 		ioutility::ioread(m_fd, &onebyte, 1);
 		cid = 64;
 		cid += onebyte;
-		printf("basic header parsed, fmt = %d,cid = %d\n", fmt, cid);
+		if (onebyte == 48)
+		{
+			printf("stop\n");
+		}
+		printf("basic header parsed,one bytes fmt = %d,cid = %d ,byte=%x\n", fmt, cid, onebyte);
 	}
 	else if (cid == 1)
 	{
@@ -1966,7 +1970,7 @@ int rtmpprotocol::readbasicheader(char& fmt, int& cid)
 		cid = 64;
 		cid += twobytes[0];
 		cid += twobytes[1] * 256;
-		printf("basic header parsed, fmt = %d,cid = %d\n", fmt, cid);
+		printf("basic header parsed,two bytes fmt = %d,cid = %d\n", fmt, cid);
 	}
 	else
 	{
@@ -2305,8 +2309,7 @@ int rtmpprotocol::pull_and_send_stream()
 	static bool isfirst = true;
 	if(isfirst)
 	{
-		//¿¿¿¿¿¿¿¿¿¿¿¿messagedata¿¿¿client¿¿¿client¿¿¿¿¿¿¿
-		isfirst = false;
+		//¿¿¿¿¿¿¿¿¿¿¿¿messagedata¿¿¿client¿¿¿client¿¿¿¿¿¿?		isfirst = false;
 		sharedMessage msg = m_source->get_MessageData();
 		if( -1 == send_and_free_message_to_client(&msg))
 		{

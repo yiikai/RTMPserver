@@ -29,29 +29,18 @@ Server should reset the client and clean from epoll tree
 int ioutility::iowrite(int fd, char*buf, int size)
 {
 	int allnum = size;
-	//signal(SIGPIPE, SIG_IGN);
 	int ret = write(fd, buf, size);
-	if (ret == 0)
+	if (ret == -1)
 	{
-		if (errno == ETIMEDOUT)
+		if (errno == 32)
 		{
-			//printf("write data to socket error, %s\n", strerror(errno));
-			return -1;
-		}
-		else if (errno == ECONNRESET)
-		{
-			//printf("write data to socket error, %s\n", strerror(errno));
-			return -1;
-		}
-		else if (errno == EPIPE)
-		{
-			printf("write data to socket error, %s\n", strerror(errno));
-			return -1;
+			//it can according errno = 32 to check whether client has closed
+			printf("write return -1 errorno is %s\n", strerror(errno));
+			return CLIENT_CLOSED;
 		}
 		else
 		{
-			//printf("write data to socket error, %s\n", strerror(errno));
-			return -1;
+			return IO_WRITE_ERROR;
 		}
 	}
 	return ret;

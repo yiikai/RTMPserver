@@ -810,7 +810,7 @@ rtmpprotocol::rtmpprotocol(int fd) :m_source(NULL),
 									m_c2(NULL)
 {
 	m_fd = fd;
-	m_clientVec.reserve(10);
+	//m_clientVec.reserve(10);
 }
 
 rtmpprotocol::~rtmpprotocol()
@@ -1294,16 +1294,18 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 			printf("not exits any url stream source , should create a new source for client and wait for streaming coming\n");
 			return -1;
 		}
-		//在进行play之前，需要修改socket的监听事件为可写,这样每次都可以在epoll的时候对这个socket进行AV数据的write动作
+		
 		if(m_source->get_rtmpprotocol())
 		{
+			int ret = 0;
 			m_source->get_rtmpprotocol()->add_play_client(m_fd);
-			send_and_free_message_to_client(&(m_source->get_MessageData()),m_fd);
-			send_and_free_message_to_client(&(m_source->get_Video_Sequence_Head()),m_fd);
+			if (send_and_free_message_to_client(&(m_source->get_MessageData()), m_fd) == -1)
+				return -1;
+			if (send_and_free_message_to_client(&(m_source->get_Video_Sequence_Head()), m_fd) == -1)
+				return -1;
 			send_gop_cache(m_source->get_rtmpprotocol()->m_cache);
 		}
-		//	fdtype type = writefd;
-		//	cycleepoll::modifyconnectionsocketfd(type, m_fd);
+		
 		delete packet;
 		delete pkt;
 	}
@@ -1490,10 +1492,11 @@ int rtmpprotocol::on_audiodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	{
 		//when audio has arrived need check cuurent stream protocol if has client connected
 		//if has client need send audio data to client
-		vector<int>::iterator itr = m_clientVec.begin();
+		list<int>::iterator itr = m_clientVec.begin();
 		for(;itr != m_clientVec.end(); itr++)
 		{
-			send_and_free_message_to_client(message,*itr);		
+			if (send_and_free_message_to_client(message, *itr) == -1)
+				return -1;
 		}
 	}
 
@@ -1531,10 +1534,11 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	{
 		//when video arrive need check cuurent stream protocol if has client connected
 		//if has client need send video data to client
-		vector<int>::iterator itr = m_clientVec.begin();
+		list<int>::iterator itr = m_clientVec.begin();
 		for(;itr != m_clientVec.end(); itr++)
 		{
-			send_and_free_message_to_client(message,*itr);		
+			if (send_and_free_message_to_client(message, *itr) == -1)
+				return -1;
 		}
 	}
 	//m_source->pop_msg();
@@ -2164,6 +2168,20 @@ int rtmpprotocol::response_connect_app()
 	return ret;
 }
 
+void rtmpprotocol::remove_play_client(int fd)
+{
+	printf("client vec size is %d\n", m_clientVec.size());
+	list<int>::iterator itr = m_clientVec.begin();
+	for (; itr != m_clientVec.end(); itr++)
+	{
+		if (*itr == fd)
+		{
+			m_clientVec.erase(itr);
+			//after erase need return , because the m_clientvec itr has changed and can't use anymore
+			return;
+		}
+	}
+}
 
 int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg, int clientfd)
 {
@@ -2194,9 +2212,14 @@ int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg, int client
 			int buflength = totalsize - hn;
 			memcpy(sendbuf + hn, p, buflength);
 			int num = ioutility::iowrite(clientfd, sendbuf, totalsize);
+			if (num == CLIENT_CLOSED)
+			{
+				remove_play_client(clientfd);
+				return -1;
+			}
 			if (num < hn)
 			{
-				printf("has send client data not biger than chunk header 0\n");
+				printf("has send client data not biger than chunk header 0   %d\n",__LINE__);
 			}
 			p += (num - hn);
 			delete[] sendbuf;
@@ -2221,9 +2244,14 @@ int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg, int client
 			int buflength = remainsize - hn;
 			memcpy(sendbuf + hn, p, buflength);
 			int num = ioutility::iowrite(clientfd, sendbuf, remainsize);
+			if (num == CLIENT_CLOSED)
+			{
+				remove_play_client(clientfd);
+				return -1;
+			}
 			if (num < hn)
 			{
-				printf("has send client data not biger than chunk header 0\n");
+				printf("has send client data not biger than chunk header 0   %d\n",__LINE__);
 			}
 			p += (num - hn);
 			delete[] sendbuf;
@@ -2264,9 +2292,14 @@ int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg)
 			int buflength = totalsize - hn;
 			memcpy(sendbuf + hn, p, buflength);
 			int num = ioutility::iowrite(m_fd, sendbuf, totalsize);
+			if (num == CLIENT_CLOSED)
+			{
+				remove_play_client(m_fd);
+				return -1;
+			}
 			if (num < hn)
 			{
-				printf("has send client data not biger than chunk header 0\n");
+				printf("has send client data not biger than chunk header 0   %d\n",__LINE__);
 			}
 			p += (num - hn);
 			delete[] sendbuf;
@@ -2291,9 +2324,14 @@ int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg)
 			int buflength = remainsize - hn;
 			memcpy(sendbuf + hn, p, buflength);
 			int num = ioutility::iowrite(m_fd, sendbuf, remainsize);
+			if (num == CLIENT_CLOSED)
+			{
+				remove_play_client(m_fd);
+				return -1;
+			}
 			if (num < hn)
 			{
-				printf("has send client data not biger than chunk header 0\n");
+				printf("has send client data not biger than chunk header 0   %d\n",__LINE__);
 			}
 			p += (num - hn);
 			delete[] sendbuf;

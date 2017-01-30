@@ -10,6 +10,7 @@
 #include "rtmpcore.h"
 #include "gopcache.h"
 #include <vector>
+#include <list>
 using namespace std;
 
 #define RTMP_MSG_SetChunkSize                   0x01
@@ -1194,6 +1195,7 @@ private:
 	int create_c3_chunk(char* chunk,sharedMessageheader* mh);
     int create_c3_chunk(char* chunk,rtmpcommonmessageheader* mh);
 	
+	void remove_play_client(int fd);
 private:
 	requestinfo req;
 	rtmpstreamsource* m_source;
@@ -1212,7 +1214,7 @@ private:
 	 * how many play client need it, and when video and audio data has come, it should send 
 	 * them to all client in clientVec
 	 */
-	vector<int> m_clientVec;  
+	list<int> m_clientVec;  
 	
 	//chunk message 成员
 //	int m_fmt;

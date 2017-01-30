@@ -1,6 +1,9 @@
 #ifndef IO_UTILITY_H
 #define IO_UTILITY_H
 
+#define IO_WRITE_ERROR -1
+#define CLIENT_CLOSED -2
+
 class ioutility
 {
 public:

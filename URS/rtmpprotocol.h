@@ -1116,6 +1116,8 @@ public:
 		msg = NULL;
 	}
 	~chunkstream(){
+		if (msg)
+			delete msg;
 	}
 
 	rtmpcommonmessageheader header;

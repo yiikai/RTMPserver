@@ -999,6 +999,7 @@ int rtmpprotocol::connectapp()
 	printf("set chunksize from client is %d\n", default_chunksize);
 	response_connect_app();
 	set_bwdown();
+	delete msg;
 	return 0;
 }
 
@@ -1568,6 +1569,8 @@ int rtmpprotocol::recv_message(rtmpcommonmessage** msg)
 			default_chunksize = packet->setchunksize;
 			delete *msg;
 			*msg = NULL;
+			delete packet;
+			packet = NULL;
 			return ret;
 		}break;
 		case RTMP_MSG_WindowAcknowledgementSize:
@@ -1609,6 +1612,8 @@ int rtmpprotocol::recv_message(rtmpcommonmessage** msg)
 			//the same as Data message
 			int ret = on_audiodata(*msg, header, chunkfmt);
 			printf("get audio message\n");
+			delete *msg;
+			*msg = NULL;
 			return ret;
 		}break;
 		case RTMP_MSG_VideoMessage:
@@ -1623,6 +1628,8 @@ int rtmpprotocol::recv_message(rtmpcommonmessage** msg)
 			fwrite((*msg)->payload,1,(*msg)->size,file);
 			fclose(file);
 #endif
+			delete *msg;
+			*msg = NULL;
 			printf("get video message\n");
 			return ret;
 		}break;
@@ -1820,6 +1827,7 @@ int rtmpprotocol::readmessageheader(chunkstream* chunk, char fmt)
 		}
 	}
 	chunk->chunk_count++;  //if chunk_count != 0 , it means can recieve fmt 1,2,3
+
 	return ret;
 }
 

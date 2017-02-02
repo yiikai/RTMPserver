@@ -9,6 +9,7 @@
 #include "rtmpcomplexhandshake.h"
 #include "rtmpcore.h"
 #include "gopcache.h"
+#include "tsmuxer.h"
 #include <vector>
 #include <list>
 using namespace std;
@@ -1216,7 +1217,9 @@ private:
 	 * how many play client need it, and when video and audio data has come, it should send 
 	 * them to all client in clientVec
 	 */
-	list<int> m_clientVec;  
+	list<int> m_clientVec;
+
+	tsmuxer* m_tsmuxer;
 	
 	//chunk message 成员
 //	int m_fmt;

@@ -807,9 +807,11 @@ rtmpprotocol::rtmpprotocol(int fd) :m_source(NULL),
 									default_chunksize(128),
 									m_c0c1(NULL),
 									m_s0s1s2(NULL),
-									m_c2(NULL)
+									m_c2(NULL),
+									m_tsmuxer(NULL)
 {
 	m_fd = fd;
+	m_tsmuxer = new tsmuxer();
 	//m_clientVec.reserve(10);
 }
 
@@ -1526,6 +1528,9 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	message->header.timestamps = header.timestamps;
 	message->header.chunkid = header.chunkid;
 	m_source->push_msg(message);
+
+	m_tsmuxer->on_video(msg->payload, msg->size);
+
 	if(flvcodec::getInstance()->video_is_sequence_header(message->messagepalyload,message->length))
 	{
 		m_source->record_videoSequenceHead(*message);	

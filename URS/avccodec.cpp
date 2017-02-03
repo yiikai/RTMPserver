@@ -1,7 +1,42 @@
 #include "avccodec.h"
 #include <stdio.h>
 #include <string.h>
-avccodec::avccodec() :sequenceParameterSetNALUnit(NULL)
+#include <assert.h>
+
+avcsample::avcsample() :isIDR(false)
+{
+
+}
+
+avcsample::~avcsample()
+{
+
+}
+
+avcsample::avcsample(const avcsample& sample)
+{
+	
+}
+
+avcsample& avcsample::operator = (const avcsample& sample)
+{
+
+}
+
+int avcsample::add_sample(const char* data, const int length)
+{
+	char* newsample = new char[length];
+	memcpy(newsample,data,length);
+	m_nalusamples.push_back(newsample);
+	if ((data[0] & 0x1f) == SrsAvcNaluTypeIDR)
+	{
+		isIDR = true;
+	}
+}
+
+
+avccodec::avccodec() :sequenceParameterSetNALUnit(NULL),
+					pictureParameterSetNALUnit(NULL)
 {
 
 }
@@ -52,9 +87,68 @@ int avccodec::avcdemux(const char* data, const int length)
 		//This is sequence head and demux sps and pps
 		avc_decoder_configuration_record_demux(data + index, length - index);
 	}
-	else
+	else if (AVCPacketType == 1)  //One or more NALUs (Full frames are required)
 	{
+		avcsample sample;
+		avc_ibmf_format_demux(data + index, length - index, sample);   //目前推流的video数据是ibmf格式的"ISO Base Media File Format"
+	}
+}
 
+int avccodec::avc_ibmf_format_demux(const char* data, const int length, avcsample& sample)
+{
+	assert(m_NalunitLength != 2);
+	int nalulen = 0;
+	switch (m_NalunitLength)
+	{
+		case 0:
+			nalulen = 1; break;
+		case 1:
+			nalulen = 2; break;
+		case 3:
+			nalulen = 4; break;
+		default:
+		{	
+			printf("AVC nalu length size is error,It must be 0,1,3\n");
+			return -1;
+		}break;
+	}
+
+	for (int i = 0; i < length; i++)
+	{
+		int readnalulen = 0;
+		int num = 0;
+		char* p = (char*)(&readnalulen);
+		if (nalulen == 1)
+		{
+			*p = data[num];
+			num += 1;
+		}
+		else if (nalulen == 2)
+		{
+			p[1] = data[num];
+			num += 1;
+			p[0] = data[num];
+			num += 1;
+		}
+		else if (nalulen == 4)
+		{
+			p[3] = data[num];
+			num += 1;
+			p[2] = data[num];
+			num += 1;
+			p[1] = data[num];
+			num += 1;
+			p[0] = data[num];
+			num += 1;
+		}
+		else
+		{
+			printf("nalu len is error\n");
+			return -1;
+		}
+		sample.add_sample(data + nalulen, readnalulen);
+		i += (nalulen + readnalulen);
+		data += (nalulen + readnalulen);
 	}
 }
 
@@ -76,6 +170,7 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 	unsigned char AVCLevelIndication = data[index];
 	index += 1;
 	unsigned char lengthSizeMinusOne = data[index] & 0x03;
+	m_NalunitLength = lengthSizeMinusOne;
 	index += 1;
 	unsigned char numOfSequenceParameterSets = data[index] & 0x1f;
 	index += 1;

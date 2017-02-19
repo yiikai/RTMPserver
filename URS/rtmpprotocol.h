@@ -79,7 +79,6 @@ using namespace std;
 #define RTMP_MSG_VideoMessage                   9 // 0x09
 #define RTMP_MSG_AggregateMessage               22 // 0x16
 
-
 #define RTMP_AMF0_COMMAND_CONNECT               "connect"
 #define RTMP_AMF0_COMMAND_CREATE_STREAM         "createStream"
 #define RTMP_AMF0_COMMAND_CLOSE_STREAM          "closeStream"

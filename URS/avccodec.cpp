@@ -23,11 +23,29 @@ avcsample& avcsample::operator = (const avcsample& sample)
 
 }
 
+int avcsample::get_size()
+{
+	int size = 0;
+	if (m_nalusamples.empty())
+	{
+		return size;
+	}
+	vector<nalusample*>::iterator itr = m_nalusamples.begin();
+	for (; itr != m_nalusamples.end(); itr++)
+	{
+		size += (*itr)->size;
+	}
+	return size;
+}
+
 int avcsample::add_sample(const char* data, const int length)
 {
 	char* newsample = new char[length];
 	memcpy(newsample,data,length);
-	m_nalusamples.push_back(newsample);
+	nalusample* sample = new nalusample;
+	sample->bytes = newsample;
+	sample->size = length;
+	m_nalusamples.push_back(sample);
 	if ((data[0] & 0x1f) == SrsAvcNaluTypeIDR)
 	{
 		isIDR = true;
@@ -36,7 +54,9 @@ int avcsample::add_sample(const char* data, const int length)
 
 
 avccodec::avccodec() :sequenceParameterSetNALUnit(NULL),
-					pictureParameterSetNALUnit(NULL)
+					pictureParameterSetNALUnit(NULL),
+					spslen(0),
+					ppslen(0)
 {
 
 }
@@ -56,7 +76,7 @@ avccodec& avccodec::operator = (const avccodec& codec)
 
 }
 
-int avccodec::avcdemux(const char* data, const int length)
+int avccodec::avcdemux(const char* data, const int length, avcsample& sample)
 {
 	int index = 0;
 	printf("start demux avc data\n");
@@ -86,12 +106,66 @@ int avccodec::avcdemux(const char* data, const int length)
 	{
 		//This is sequence head and demux sps and pps
 		avc_decoder_configuration_record_demux(data + index, length - index);
+		return -2; 
 	}
 	else if (AVCPacketType == 1)  //One or more NALUs (Full frames are required)
 	{
-		avcsample sample;
 		avc_ibmf_format_demux(data + index, length - index, sample);   //目前推流的video数据是ibmf格式的"ISO Base Media File Format"
 	}
+}
+
+int avccodec::do_cache_avc_format(avcsample& sample,vector<char>& video)
+{
+	// mux the samples in annexb format
+	unsigned char fresh_nalu_header[] = { 0x00, 0x00, 0x00, 0x01 };
+	unsigned char cont_nalu_header[] = { 0x00, 0x00, 0x01 };
+
+	//H.264 video access units must use Access Unit Delimiter NALs, and must be in unique PES packets.
+	unsigned char aud_nalu_7[] = { 0x09, 0xf0 };
+	video.insert(video.end(),fresh_nalu_header,fresh_nalu_header + 4);
+	video.insert(video.end(), aud_nalu_7, aud_nalu_7 + 2);
+
+	// when ts samples contains IDR, insert sps+pps.
+	if (sample.is_IDR())
+	{
+		// fresh nalu header before sps.
+		if (spslen > 0)
+		{
+			// AnnexB prefix, for sps always 4 bytes header
+			video.insert(video.end(), fresh_nalu_header, fresh_nalu_header + 4);
+			video.insert(video.end(), sequenceParameterSetNALUnit, sequenceParameterSetNALUnit + spslen);
+		}
+		if (ppslen > 0)
+		{
+			video.insert(video.end(), cont_nalu_header, cont_nalu_header + 3);
+			video.insert(video.end(), pictureParameterSetNALUnit, pictureParameterSetNALUnit + ppslen);
+		}
+	}
+	vector<nalusample*>& vec = sample.get_nalusamples();
+	vector<nalusample*>::iterator itr;
+	for (itr = vec.begin(); itr != vec.end(); itr++)
+	{
+		nalusample* sample_unit = *itr;
+		int size = sample_unit->size;
+		if (!sample_unit->bytes || size <= 0) {
+			printf("nalu in sample error\n");
+			return -1;
+		}
+		SrsAvcNaluType nal_unit_type = (SrsAvcNaluType)(sample_unit->bytes[0] & 0x1f);
+
+		// ignore SPS/PPS/AUD
+		switch (nal_unit_type) {
+		case SrsAvcNaluTypeSPS:
+		case SrsAvcNaluTypePPS:
+		case SrsAvcNaluTypeAccessUnitDelimiter:
+			continue;
+		default:
+			break;
+		}
+		video.insert(video.end(), cont_nalu_header, cont_nalu_header + 3);
+		video.insert(video.end(), sample_unit->bytes, sample_unit->bytes + sample_unit->size);
+	}
+	return 0;
 }
 
 int avccodec::avc_ibmf_format_demux(const char* data, const int length, avcsample& sample)
@@ -181,6 +255,7 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 		index += 1;
 		((char*)(&sequenceParameterSetLength))[0] = data[index];
 		index += 1;
+		spslen = sequenceParameterSetLength;
 		sequenceParameterSetNALUnit = new char[sequenceParameterSetLength];
 		memset(sequenceParameterSetNALUnit, 0, sequenceParameterSetLength);
 		memcpy(sequenceParameterSetNALUnit, data + index, sequenceParameterSetLength);
@@ -195,6 +270,7 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 		index += 1;
 		((char*)(&pictureParameterSetLength))[0] = data[index];
 		index += 1;
+		ppslen = pictureParameterSetLength;
 		pictureParameterSetNALUnit = new char[pictureParameterSetLength];
 		memcpy(pictureParameterSetNALUnit, data + index, pictureParameterSetLength);
 		index += pictureParameterSetLength;

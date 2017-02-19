@@ -35,6 +35,14 @@ void streamworker::write2bytes(short value)
 }
 
 
+void streamworker::write3bytes(int value)
+{
+	char* pp = (char*)&value;
+	*currentpos++ = pp[2];
+	*currentpos++ = pp[1];
+	*currentpos++ = pp[0];
+}
+
 void streamworker::write4bytes(int value)
 {
 	char* pp = (char*)&value;

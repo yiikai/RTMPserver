@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-avcsample::avcsample() :isIDR(false)
+avcsample::avcsample() :isIDR(false),isSEI(false)
 {
 
 }
@@ -40,15 +40,17 @@ int avcsample::get_size()
 
 int avcsample::add_sample(const char* data, const int length)
 {
+	sampleST sample;
 	char* newsample = new char[length];
 	memcpy(newsample,data,length);
-	nalusample* sample = new nalusample;
-	sample->bytes = newsample;
-	sample->size = length;
-	m_nalusamples.push_back(sample);
+	sample.data = newsample;
 	if ((data[0] & 0x1f) == SrsAvcNaluTypeIDR)
 	{
 		isIDR = true;
+	}
+	if((data[0] & 0x1f) == SrsAvcNaluTypeSEI)
+	{
+		isSEI = true;
 	}
 }
 
@@ -76,7 +78,7 @@ avccodec& avccodec::operator = (const avccodec& codec)
 
 }
 
-int avccodec::avcdemux(const char* data, const int length, avcsample& sample)
+int avccodec::avcdemux(const char* data, const int length, avcsample& sample,int& isSpsPPS)
 {
 	int index = 0;
 	printf("start demux avc data\n");
@@ -102,16 +104,27 @@ int avccodec::avcdemux(const char* data, const int length, avcsample& sample)
 	index += 1;
 	((char*)(&CompositionTime))[0] = data[index];
 	index += 1;
+	
 	if (AVCPacketType == 0)
 	{
 		//This is sequence head and demux sps and pps
+		isSpsPPS = 1;
 		avc_decoder_configuration_record_demux(data + index, length - index);
 		return -2; 
 	}
 	else if (AVCPacketType == 1)  //One or more NALUs (Full frames are required)
 	{
-		avc_ibmf_format_demux(data + index, length - index, sample);   //目前推流的video数据是ibmf格式的"ISO Base Media File Format"
+		avc_ibmf_format_demux(data + index, length - index, sample);
+		if(sample.isSEI)
+		{
+			isSpsPPS = 2;
+		}
+		else{
+			isSpsPPS = 0;
+		}
+		sample.cts = CompositionTime;   	
 	}
+	return 0;
 }
 
 int avccodec::do_cache_avc_format(avcsample& sample,vector<char>& video)
@@ -259,6 +272,7 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 		sequenceParameterSetNALUnit = new char[sequenceParameterSetLength];
 		memset(sequenceParameterSetNALUnit, 0, sequenceParameterSetLength);
 		memcpy(sequenceParameterSetNALUnit, data + index, sequenceParameterSetLength);
+		spslen = sequenceParameterSetLength;
 		index += sequenceParameterSetLength;
 	}
 	unsigned char numOfPictureParameterSets = data[index];
@@ -273,6 +287,7 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 		ppslen = pictureParameterSetLength;
 		pictureParameterSetNALUnit = new char[pictureParameterSetLength];
 		memcpy(pictureParameterSetNALUnit, data + index, pictureParameterSetLength);
+		ppslen = pictureParameterSetLength;
 		index += pictureParameterSetLength;
 	}
 	return 0;

@@ -808,7 +808,9 @@ rtmpprotocol::rtmpprotocol(int fd) :m_source(NULL),
 									m_c0c1(NULL),
 									m_s0s1s2(NULL),
 									m_c2(NULL),
-									m_tsmuxer(NULL)
+									m_tsmuxer(NULL),
+									first_onvideo(false)
+
 {
 	m_fd = fd;
 	m_tsmuxer = new tsmuxer();
@@ -1508,6 +1510,36 @@ int rtmpprotocol::on_audiodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	return ret;
 }
 
+static int read_buffer(void* opaque, uint8_t* buf, int size)
+{
+	rtmpstreamsource* source = (rtmpstreamsource*)(opaque);
+	while(1)
+	{
+	pthread_mutex_lock(&source->m_tsmux_mutex);
+	sharedMessage *message = source->tsmuxer_front();
+	if(message)
+	{
+		if(message->length < size)  //size is not sure, and make a max size for memcpy
+		{
+			memcpy(buf,message->messagepalyload,message->length);
+			source->pop_tsmuxmsg();
+			pthread_mutex_unlock(&source->m_tsmux_mutex);
+			return message->length;
+		}
+
+		source->pop_tsmuxmsg();
+		pthread_mutex_unlock(&source->m_tsmux_mutex);
+		continue;
+	}
+
+	pthread_mutex_unlock(&source->m_tsmux_mutex);
+	continue;
+	}
+	return 0;
+}
+
+extern void* create_file_thread_func(void* arg);
+
 int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader header, int fmt)
 {
 	int ret = 0;
@@ -1528,8 +1560,7 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	message->header.timestamps = header.timestamps;
 	message->header.chunkid = header.chunkid;
 	m_source->push_msg(message);
-
-	m_tsmuxer->on_video(msg->payload, msg->size);
+		
 
 	if(flvcodec::getInstance()->video_is_sequence_header(message->messagepalyload,message->length))
 	{
@@ -1547,6 +1578,17 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 				return -1;
 		}
 	}
+#if 0
+	pthread_mutex_lock(&m_source->m_tsmux_mutex);	
+	m_source->push_tsmuxmsg(message);
+	pthread_mutex_unlock(&m_source->m_tsmux_mutex);
+	if(!first_onvideo)
+	{
+		m_tsmuxer->open_muxfile(read_buffer,m_source);
+		pthread_create(&m_tsid,NULL,create_file_thread_func,(void*)m_tsmuxer);
+		first_onvideo = true;
+	}
+#endif
 	//m_source->pop_msg();
 	printf("receive video msg data length %d\n", message->length);
 	//printf("receive video msg data PTS is %d,insert video msg data PTS is %d\n",header.timestamps,message->header.timestamps);
@@ -2360,7 +2402,6 @@ int rtmpprotocol::pull_and_send_stream()
 	static bool isfirst = true;
 	if(isfirst)
 	{
-		//靠靠靠靠靠靠messagedata靠縞lient靠縞lient靠靠靠?		isfirst = false;
 		sharedMessage msg = m_source->get_MessageData();
 		if( -1 == send_and_free_message_to_client(&msg))
 		{
@@ -2372,9 +2413,7 @@ int rtmpprotocol::pull_and_send_stream()
 	if (!msg)
 		return -1;
 
-	//目前对于拉流没有策略，拉一个出队列一个
 	m_source->pop_msg();
-	//推送流数据到客户端
 	if (-1 == send_and_free_message_to_client(msg))
 	{
 		return -1;

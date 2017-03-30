@@ -9,6 +9,7 @@
 #include <time.h>
 #include <string.h>
 
+
 int rtmpcreatestreampacket::decodepayload(rtmpcommonmessage* msg)
 {
 	int ret = 0;
@@ -808,9 +809,8 @@ rtmpprotocol::rtmpprotocol(int fd) :m_source(NULL),
 									m_c0c1(NULL),
 									m_s0s1s2(NULL),
 									m_c2(NULL),
-									m_tsmuxer(NULL),
-									first_onvideo(false)
-
+                                    m_tsmuxer(NULL),
+                                    m_first(true)
 {
 	m_fd = fd;
 	m_tsmuxer = new tsmuxer();
@@ -1190,7 +1190,7 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 		rtmpUnPublishPacket* packet = new rtmpUnPublishPacket();
 		int ret = packet->decodepayload(msg);
 		delete packet;
-		//接受到unpublish的command之后就可以进行fd的关闭操作了
+		//陆脫脢脺碌陆unpublish碌脛command脰庐潞贸戮脥驴脡脪脭陆酶脨脨fd碌脛鹿脴卤脮虏脵脳梅脕脣
 		cycleepoll::delclientconnection(m_fd);
 		return ret;
 	}
@@ -1200,7 +1200,7 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 		stream.init(msg->payload, msg->size);
 		rtmpcreatestreampacket* packet = new rtmpcreatestreampacket();
 		int ret = packet->decodepayload(msg);
-		rtmpcreatestreamrespacket* res_packet = new rtmpcreatestreamrespacket(packet->transaction_id, 1);    //srs也是指定默认回复createstream用的是streamid = 1
+		rtmpcreatestreamrespacket* res_packet = new rtmpcreatestreamrespacket(packet->transaction_id, 1);    //srs脪虏脢脟脰赂露篓脛卢脠脧禄脴赂麓createstream脫脙碌脛脢脟streamid = 1
 		// default stream id for response the createStream request.
 		//#define SRS_DEFAULT_SID                         1
 		send_and_free_packet(res_packet, 0);
@@ -1220,7 +1220,7 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 		res_packet->command_object->set_prop_keyvalue("code", Amf0Any::str("NetStream.Publish.Start"));
 		res_packet->command_object->set_prop_keyvalue("description", Amf0Any::str("Started publish stream."));
 		send_and_free_packet(res_packet, streamid);
-		//记录的rtmp地址需要拼接上播放路径:例子:rtmp://127.0.0.1/live/123, 123就是播放路径
+		//录脟脗录碌脛rtmp碌脴脰路脨猫脪陋脝麓陆脫脡脧虏楼路脜脗路戮露:脌媒脳脫:rtmp://127.0.0.1/live/123, 123戮脥脢脟虏楼路脜脗路戮露
 		req.tcUrl += packet->stream_name;
 
 		printf("publish url with stream name is %s\n", req.tcUrl.c_str());
@@ -1250,7 +1250,7 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 	{
 		rtmpplaypacket* packet = new rtmpplaypacket();
 		int ret = packet->decodepayload(msg);
-		//the same as publish , 需要进行req的url的拼接工作，用拼接后的url去获取steamsource
+		//the same as publish , 脨猫脪陋陆酶脨脨req碌脛url碌脛脝麓陆脫鹿陇脳梅拢卢脫脙脝麓陆脫潞贸碌脛url脠楼禄帽脠隆steamsource
 		req.tcUrl += packet->stream_name;
 		printf("play url with stream name is %s\n", req.tcUrl.c_str());
 		//send streambegin event packet
@@ -1293,7 +1293,7 @@ int rtmpprotocol::distinguishpacket(rtmpcommonmessage* msg, int headtype, int st
 
 		streamsource* ss = streamsource::getInstance();
 		m_source = ss->findsource(&req);
-		//对于play的客户端而言如果没有得到streamsource就说明没有推流端存在，不应该给客户端传递任何stream
+		//露脭脫脷play碌脛驴脥禄搂露脣露酶脩脭脠莽鹿没脙禄脫脨碌脙碌陆streamsource戮脥脣碌脙梅脙禄脫脨脥脝脕梅露脣麓忙脭脷拢卢虏禄脫娄赂脙赂酶驴脥禄搂露脣麓芦碌脻脠脦潞脦stream
 		if (!m_source)
 		{
 			printf("not exits any url stream source , should create a new source for client and wait for streaming coming\n");
@@ -1509,37 +1509,7 @@ int rtmpprotocol::on_audiodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 
 	return ret;
 }
-
-static int read_buffer(void* opaque, uint8_t* buf, int size)
-{
-	rtmpstreamsource* source = (rtmpstreamsource*)(opaque);
-	while(1)
-	{
-	pthread_mutex_lock(&source->m_tsmux_mutex);
-	sharedMessage *message = source->tsmuxer_front();
-	if(message)
-	{
-		if(message->length < size)  //size is not sure, and make a max size for memcpy
-		{
-			memcpy(buf,message->messagepalyload,message->length);
-			source->pop_tsmuxmsg();
-			pthread_mutex_unlock(&source->m_tsmux_mutex);
-			return message->length;
-		}
-
-		source->pop_tsmuxmsg();
-		pthread_mutex_unlock(&source->m_tsmux_mutex);
-		continue;
-	}
-
-	pthread_mutex_unlock(&source->m_tsmux_mutex);
-	continue;
-	}
-	return 0;
-}
-
 extern void* create_file_thread_func(void* arg);
-
 int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader header, int fmt)
 {
 	int ret = 0;
@@ -1549,8 +1519,7 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 		printf("create audio data for shared error\n");
 		return -1;
 	}
-	message->messagepalyload = msg->payload;
-	message->length = msg->size;
+
 	message->messagepalyload = msg->payload;
 	message->length = msg->size;
 	message->header.timestamp_delta = header.timestamp_delta;
@@ -1560,7 +1529,19 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 	message->header.timestamps = header.timestamps;
 	message->header.chunkid = header.chunkid;
 	m_source->push_msg(message);
-		
+    m_tsmuxer->recv_video_data(message->messagepalyload,message->length);
+    if(message->header.timestamps / 1000 > 10)
+    {
+        m_tsmuxer->done = true;
+    }
+    if(m_first /*&& m_tsmuxer->m_tsqueue.size() > 5*/)
+    {
+        m_tsmuxer->open_muxfile();
+        pthread_create(&m_muxt,NULL,create_file_thread_func,m_tsmuxer);
+        m_first = false;
+    }
+
+    //m_tsmuxer->on_video(msg->payload, msg->size);
 
 	if(flvcodec::getInstance()->video_is_sequence_header(message->messagepalyload,message->length))
 	{
@@ -1578,17 +1559,6 @@ int rtmpprotocol::on_videodata(rtmpcommonmessage* msg, rtmpcommonmessageheader h
 				return -1;
 		}
 	}
-#if 0
-	pthread_mutex_lock(&m_source->m_tsmux_mutex);	
-	m_source->push_tsmuxmsg(message);
-	pthread_mutex_unlock(&m_source->m_tsmux_mutex);
-	if(!first_onvideo)
-	{
-		m_tsmuxer->open_muxfile(read_buffer,m_source);
-		pthread_create(&m_tsid,NULL,create_file_thread_func,(void*)m_tsmuxer);
-		first_onvideo = true;
-	}
-#endif
 	//m_source->pop_msg();
 	printf("receive video msg data length %d\n", message->length);
 	//printf("receive video msg data PTS is %d,insert video msg data PTS is %d\n",header.timestamps,message->header.timestamps);
@@ -1846,7 +1816,7 @@ int rtmpprotocol::readmessageheader(chunkstream* chunk, char fmt)
 		printf("header read completed. fmt=%d, size=%d, ext_time=%d\n",
 			fmt, mh_size, chunk->extended_timestamp);
 	}
-	//message header 瑙ｆ瀽鎴愬姛
+	//message header 猫搂拢忙聻聬忙聢聬氓聤聼
 	if (chunk->extended_timestamp)
 	{
 		mh_size += 4;
@@ -2255,8 +2225,8 @@ int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg, int client
 			char* sendbuf = NULL;
 			if (totalsize > 4096)
 			{
-				sendbuf = new char[4096 + hn];    //这里用chunkheader的大小加上协商的chunksize的大小愿意是ffmpeg在
-				//解析的时候 当大于chunksize的包会按照chunksize读取数据，这样就导致实体发送的数据没有chunksize的大小
+				sendbuf = new char[4096 + hn];    //脮芒脌茂脫脙chunkheader碌脛麓贸脨隆录脫脡脧脨颅脡脤碌脛chunksize碌脛麓贸脨隆脭赂脪芒脢脟ffmpeg脭脷
+				//陆芒脦枚碌脛脢卤潞貌 碌卤麓贸脫脷chunksize碌脛掳眉禄谩掳麓脮脮chunksize露脕脠隆脢媒戮脻拢卢脮芒脩霉戮脥碌录脰脗脢碌脤氓路垄脣脥碌脛脢媒戮脻脙禄脫脨chunksize碌脛麓贸脨隆
 				totalsize = 4096 + hn;
 			}
 			else
@@ -2335,8 +2305,8 @@ int rtmpprotocol::send_and_free_message_to_client(sharedMessage* msg)
 			char* sendbuf = NULL;
 			if (totalsize > 4096)
 			{
-				sendbuf = new char[4096 + hn];    //这里用chunkheader的大小加上协商的chunksize的大小愿意是ffmpeg在
-				//解析的时候 当大于chunksize的包会按照chunksize读取数据，这样就导致实体发送的数据没有chunksize的大小
+				sendbuf = new char[4096 + hn];    //脮芒脌茂脫脙chunkheader碌脛麓贸脨隆录脫脡脧脨颅脡脤碌脛chunksize碌脛麓贸脨隆脭赂脪芒脢脟ffmpeg脭脷
+				//陆芒脦枚碌脛脢卤潞貌 碌卤麓贸脫脷chunksize碌脛掳眉禄谩掳麓脮脮chunksize露脕脠隆脢媒戮脻拢卢脮芒脩霉戮脥碌录脰脗脢碌脤氓路垄脣脥碌脛脢媒戮脻脙禄脫脨chunksize碌脛麓贸脨隆
 				totalsize = 4096 + hn;
 			}
 			else
@@ -2402,6 +2372,7 @@ int rtmpprotocol::pull_and_send_stream()
 	static bool isfirst = true;
 	if(isfirst)
 	{
+		//驴驴驴驴驴驴驴驴驴驴驴驴messagedata驴驴驴client驴驴驴client驴驴驴驴驴驴?		isfirst = false;
 		sharedMessage msg = m_source->get_MessageData();
 		if( -1 == send_and_free_message_to_client(&msg))
 		{
@@ -2413,7 +2384,9 @@ int rtmpprotocol::pull_and_send_stream()
 	if (!msg)
 		return -1;
 
+	//脛驴脟掳露脭脫脷脌颅脕梅脙禄脫脨虏脽脗脭拢卢脌颅脪禄赂枚鲁枚露脫脕脨脪禄赂枚
 	m_source->pop_msg();
+	//脥脝脣脥脕梅脢媒戮脻碌陆驴脥禄搂露脣
 	if (-1 == send_and_free_message_to_client(msg))
 	{
 		return -1;

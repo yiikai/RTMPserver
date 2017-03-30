@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-avcsample::avcsample() :isIDR(false),isSEI(false)
+avcsample::avcsample() :isIDR(false)
 {
 
 }
@@ -13,15 +13,15 @@ avcsample::~avcsample()
 
 }
 
-avcsample::avcsample(const avcsample& sample)
-{
+//avcsample::avcsample(const avcsample& sample)
+//{
 	
-}
+//}
 
-avcsample& avcsample::operator = (const avcsample& sample)
-{
+//avcsample& avcsample::operator = (const avcsample& sample)
+//{
 
-}
+//}
 
 int avcsample::get_size()
 {
@@ -40,17 +40,15 @@ int avcsample::get_size()
 
 int avcsample::add_sample(const char* data, const int length)
 {
-	sampleST sample;
 	char* newsample = new char[length];
 	memcpy(newsample,data,length);
-	sample.data = newsample;
+	nalusample* sample = new nalusample;
+	sample->bytes = newsample;
+	sample->size = length;
+	m_nalusamples.push_back(sample);
 	if ((data[0] & 0x1f) == SrsAvcNaluTypeIDR)
 	{
 		isIDR = true;
-	}
-	if((data[0] & 0x1f) == SrsAvcNaluTypeSEI)
-	{
-		isSEI = true;
 	}
 }
 
@@ -78,7 +76,7 @@ avccodec& avccodec::operator = (const avccodec& codec)
 
 }
 
-int avccodec::avcdemux(const char* data, const int length, avcsample& sample,int& isSpsPPS)
+int avccodec::avcdemux(const char* data, const int length, avcsample& sample)
 {
 	int index = 0;
 	printf("start demux avc data\n");
@@ -104,27 +102,17 @@ int avccodec::avcdemux(const char* data, const int length, avcsample& sample,int
 	index += 1;
 	((char*)(&CompositionTime))[0] = data[index];
 	index += 1;
-	
 	if (AVCPacketType == 0)
 	{
 		//This is sequence head and demux sps and pps
-		isSpsPPS = 1;
 		avc_decoder_configuration_record_demux(data + index, length - index);
 		return -2; 
 	}
 	else if (AVCPacketType == 1)  //One or more NALUs (Full frames are required)
 	{
-		avc_ibmf_format_demux(data + index, length - index, sample);
-		if(sample.isSEI)
-		{
-			isSpsPPS = 2;
-		}
-		else{
-			isSpsPPS = 0;
-		}
-		sample.cts = CompositionTime;   	
+		avc_ibmf_format_demux(data + index, length - index, sample);   //脛驴脟掳脥脝脕梅碌脛video脢媒戮脻脢脟ibmf赂帽脢陆碌脛"ISO Base Media File Format"
 	}
-	return 0;
+    return 0;
 }
 
 int avccodec::do_cache_avc_format(avcsample& sample,vector<char>& video)
@@ -261,7 +249,7 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 	index += 1;
 	unsigned char numOfSequenceParameterSets = data[index] & 0x1f;
 	index += 1;
-	for (int i = 0; i < numOfSequenceParameterSets; i++)   //目前针对的都是sps个数为一个的
+	for (int i = 0; i < numOfSequenceParameterSets; i++)   //脛驴脟掳脮毛露脭碌脛露录脢脟sps赂枚脢媒脦陋脪禄赂枚碌脛
 	{
 		int sequenceParameterSetLength = 0;
 		((char*)(&sequenceParameterSetLength))[1] = data[index];
@@ -272,12 +260,11 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 		sequenceParameterSetNALUnit = new char[sequenceParameterSetLength];
 		memset(sequenceParameterSetNALUnit, 0, sequenceParameterSetLength);
 		memcpy(sequenceParameterSetNALUnit, data + index, sequenceParameterSetLength);
-		spslen = sequenceParameterSetLength;
 		index += sequenceParameterSetLength;
 	}
 	unsigned char numOfPictureParameterSets = data[index];
 	index += 1;
-	for (int i = 0; i < numOfPictureParameterSets; i++)      //目前针对的都是pps个数为一个的
+	for (int i = 0; i < numOfPictureParameterSets; i++)      //脛驴脟掳脮毛露脭碌脛露录脢脟pps赂枚脢媒脦陋脪禄赂枚碌脛
 	{
 		int pictureParameterSetLength = 0;
 		((char*)(&pictureParameterSetLength))[1] = data[index];
@@ -287,7 +274,6 @@ int avccodec::avc_decoder_configuration_record_demux(const char* data, const int
 		ppslen = pictureParameterSetLength;
 		pictureParameterSetNALUnit = new char[pictureParameterSetLength];
 		memcpy(pictureParameterSetNALUnit, data + index, pictureParameterSetLength);
-		ppslen = pictureParameterSetLength;
 		index += pictureParameterSetLength;
 	}
 	return 0;

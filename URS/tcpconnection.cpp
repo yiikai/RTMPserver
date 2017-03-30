@@ -12,6 +12,7 @@ tcpconnection::~tcpconnection()
 
 }
 
+
 bool tcpconnection::createconnection(char* ip, int port)
 {
 	return true;

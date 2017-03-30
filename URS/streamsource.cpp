@@ -30,20 +30,6 @@ sharedMessage& sharedMessage::operator=(const sharedMessage& message)
 }
 
 
-void rtmpstreamsource::push_tsmuxmsg(sharedMessage* msg)
-{
-	m_tsmuxerqueue.push(msg);
-}
-
-sharedMessage* rtmpstreamsource::tsmuxer_front()
-{
-	return m_tsmuxerqueue.front();
-}
-
-void rtmpstreamsource::pop_tsmuxmsg()
-{
-	m_tsmuxerqueue.pop();
-}
 
 
 void rtmpstreamsource::push_msg(sharedMessage* msg)

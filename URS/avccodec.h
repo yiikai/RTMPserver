@@ -69,11 +69,11 @@ enum SrsAvcNaluType
 
 #define CODEC_ID_AVC 7
 
-typedef struct sample_ST
+typedef struct
 {
-	char* data;
+	char* bytes;
 	int size;
-}sampleST;
+}nalusample;
 
 class avcsample
 {
@@ -81,15 +81,15 @@ public:
 	avcsample();
 	~avcsample();
 
-	avcsample(const avcsample& sample);
-	avcsample& operator=(const avcsample& sample);
+    //avcsample(const avcsample& sample);
+    //avcsample& operator=(const avcsample& sample);
 	int get_size();
 	int add_sample(const char* data, const int length);
-
-	vector<sampleST> m_nalusamples;     //AVC spec 每一帧都是由很多个nalu组合起来的
+	bool is_IDR(){ return isIDR; }
+	vector<nalusample*>& get_nalusamples(){ return m_nalusamples; }
+private:
+	vector<nalusample*> m_nalusamples;     //AVC spec 脙驴脪禄脰隆露录脢脟脫脡潞脺露脿赂枚nalu脳茅潞脧脝冒脌麓碌脛
 	bool isIDR;
-	bool isSEI;
-	int cts;
 };
 
 
@@ -103,17 +103,20 @@ public:
 	avccodec(const avccodec& codec);
 	avccodec& operator=(const avccodec& codec);
 
-	int avcdemux(const char* data, const int length,avcsample& sample ,int& isSpsPPS);
-	
+	int avcdemux(const char* data, const int length, avcsample& sample);
+	int do_cache_avc_format(avcsample& sample, vector<char>& video);
 private:
 	int avc_decoder_configuration_record_demux(const char* data, const int length);
 	int avc_ibmf_format_demux(const char* data, const int length, avcsample& sample);
-public:
-	char* sequenceParameterSetNALUnit;
-	char* pictureParameterSetNALUnit;
-	int spslen;
-	int ppslen;
+private:
+
 	unsigned int m_NalunitLength;
+public:
+    char* sequenceParameterSetNALUnit;
+    char* pictureParameterSetNALUnit;
+    unsigned int spslen;
+    unsigned int ppslen;
+
 };
 
 #endif

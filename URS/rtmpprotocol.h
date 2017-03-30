@@ -12,9 +12,6 @@
 #include "tsmuxer.h"
 #include <vector>
 #include <list>
-#include <pthread.h>
-#include <sys/types.h>  
-#include <unistd.h>  
 using namespace std;
 
 #define RTMP_MSG_SetChunkSize                   0x01
@@ -1222,8 +1219,9 @@ private:
 	list<int> m_clientVec;
 
 	tsmuxer* m_tsmuxer;
-	bool first_onvideo;
-	pthread_t m_tsid;
+    bool m_first;
+    pthread_t m_muxt;
+    bool done;
 	//chunk message 成员
 //	int m_fmt;
 //	int m_cid;

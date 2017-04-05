@@ -642,7 +642,7 @@ tsmuxer::tsmuxer() :m_avccodec(NULL),
                     video_codec(NULL),
                     frame_index(0),
                     m_isfirst(true),
-                    m_stratwrite(false),
+                    m_stratwrite(true),
                     done(false)
 
 {
@@ -681,28 +681,30 @@ static int read_buffer(void* opaque,uint8_t* buf, int size)
     pthread_mutex_unlock(&mux->m_tsmux_mutex);
     vector<nalusample*>::iterator itr = sample.get_nalusamples().begin();
     int cpysize = 0;
-    file264 = fopen("video264.h264","ab");
-    if(!file264)
-    	return -1;
+   
     for (; itr != sample.get_nalusamples().end(); itr++)
     {
         if(mux->m_isfirst)
         {
-            memcpy(buf,fresh_nalu_header,4);
+            memcpy(buf+cpysize,fresh_nalu_header,4);
             cpysize+=4;
             mux->m_isfirst = false;
-            fwrite(fresh_nalu_header,1,4,file264);
+            //fwrite(fresh_nalu_header,1,4,file264);
         }
         else
         {
-            memcpy(buf,cont_nalu_header,3);
+            memcpy(buf+cpysize,cont_nalu_header,3);
             cpysize+=3;
-            fwrite(cont_nalu_header,1,3,file264);
+            //fwrite(cont_nalu_header,1,3,file264);
         }
-        fwrite((*itr)->bytes,1,(*itr)->size,file264);
+        //fwrite((*itr)->bytes,1,(*itr)->size,file264);
         memcpy(buf + cpysize,(*itr)->bytes,(*itr)->size);
         cpysize += (*itr)->size;
     }
+    file264 = fopen("video264.h264","ab");
+    if(!file264)
+    	return -1;
+    fwrite(buf,1,cpysize,file264);
     fclose(file264);
     file264 = NULL;
     return cpysize;
@@ -865,7 +867,6 @@ int tsmuxer::init_muxfile()
         ret = avformat_write_header(m_oc,NULL);
         if(ret < 0)
             return -1;
-        
         return 0;
 }
 

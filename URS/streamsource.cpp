@@ -1,5 +1,6 @@
 #include "streamsource.h"
 #include "rtmpprotocol.h"
+#include <utility>
 #include <string.h>
 streamsource streamsource::m_instance;
 map<string , rtmpstreamsource*> streamsource::m_pool;
@@ -90,6 +91,6 @@ rtmpstreamsource* streamsource::findsource(requestinfo* req)
 rtmpstreamsource* streamsource::createsource(requestinfo* req,rtmpprotocol* rp)
 {
 	rtmpstreamsource* source = new rtmpstreamsource(rp);
-	m_pool.insert(make_pair<string,rtmpstreamsource*>(req->tcUrl,source));
+	m_pool.insert(make_pair<string,rtmpstreamsource*>(std::move(req->tcUrl),std::move(source)));
 	return source;
 }	

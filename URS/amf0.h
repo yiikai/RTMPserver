@@ -153,7 +153,7 @@ public:
 	~Amf0EcmaArray(){}
 	void set_prop(string key,Amf0Any* value)
 	{
-		m_prop.push_back(make_pair<string,Amf0Any*>(key,value));
+		m_prop.push_back(make_pair<string,Amf0Any*>(std::move(key),std::move(value)));
 	}
 	int write(streamworker* stream);
 	int read(streamworker* stream){}

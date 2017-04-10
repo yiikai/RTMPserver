@@ -374,7 +374,7 @@ amf0object::~amf0object()
 
 void amf0object::set_prop_keyvalue(string key,Amf0Any* value)
 {
-    m_prop.push_back(make_pair<string,Amf0Any*>(key,value));
+    m_prop.push_back(make_pair<string,Amf0Any*>(std::move(key),std::move(value)));
 }
 
 int amf0object::totoalsize()

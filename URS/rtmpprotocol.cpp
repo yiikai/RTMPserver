@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <utility>
 
 
 int rtmpcreatestreampacket::decodepayload(rtmpcommonmessage* msg)
@@ -1689,7 +1690,7 @@ int rtmpprotocol::recv_interlaced_message(rtmpcommonmessage** msg, rtmpcommonmes
 	else
 	{
 		chunk = new chunkstream(cid);
-		m_chunkstreammap.insert(make_pair<int, chunkstream*>(cid, chunk));
+		m_chunkstreammap.insert(make_pair<int, chunkstream*>(std::move(cid), std::move(chunk)));
 	}
 	if (readmessageheader(chunk, fmt) == -1)
 		return -1;
